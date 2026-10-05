@@ -117,6 +117,15 @@ tiles are fixed to one severity each, and the two tables always show all four se
 
 ## Status and limits
 
+- **Private image access.** The API image lives in Artifact Registry. Scan jobs run as KSA
+  `trivy-system/trivy-operator`; `gke-deploy.sh` grants that Workload Identity principal
+  `roles/artifactregistry.reader` on the repo, and Trivy uses the pod's token from the GKE
+  metadata server. Without the grant every `job-manager-api` scan fails with
+  `DENIED: Permission 'artifactregistry.repositories.downloadArtifacts' denied` and there is no
+  VulnerabilityReport for the API.
+- **OpenObserve is not scanned** (`trivyOperator.excludeImages: "o2cr.ai/openobserve/*"`): its
+  registry redirects to public ECR, which refuses Trivy's pull, so the job only ever failed.
+
 - Counts only on the dashboard. Enabling `operator.metricsVulnIdEnabled` adds one series per CVE
   per workload (thousands here), which would need its own cardinality check.
 - Findings don't block anything: Trivy reports, Kyverno enforces. Gating deploys on scan results

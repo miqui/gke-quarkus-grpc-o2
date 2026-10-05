@@ -22,6 +22,12 @@ operator:
   # trivy.mode=ClientServer and the server URL for us.
   builtInTrivyServer: true
 
+# Not scanned: OpenObserve's image (o2cr.ai redirects to public ECR, which refuses Trivy's pull, so
+# every scan job failed and retried). The API image in Artifact Registry is scanned using the
+# Workload Identity grant gke-deploy.sh gives trivy-system/trivy-operator.
+trivyOperator:
+  excludeImages: "o2cr.ai/openobserve/*"
+
 resources:
   requests:
     cpu: 100m

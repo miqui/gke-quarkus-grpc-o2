@@ -120,6 +120,23 @@ Verified locally against the compose OTel Collector after a k6 run: 0 `*_histogr
 stored, and every dashboard query still returned data. See GRAFANA.md for the metric renames
 (HikariCP -> Agroal) that came with the migration.
 
+## 7. Capped remote_write shards (Prometheus OOMKilled during bootstrap)
+
+On the 2026-10-05 rebuild Prometheus was OOMKilled once (limit 512Mi) a few minutes after start:
+OpenObserve wasn't accepting writes yet, every batch failed, and Prometheus resharded remote_write
+from 1 to 44 shards, each buffering samples in memory. Fix: `queue_config` caps it at 4 shards of
+2500 samples (ample for four jobs; unsent data stays in the WAL), and the memory limit is now
+768Mi (steady state ~380Mi).
+
+```yaml
+    queue_config:
+      max_shards: 4
+      capacity: 2500
+```
+
+Check: `prometheus_remote_storage_shards` stays <= 4, and
+`kubectl get pod -n observability -l app=prometheus` shows no restarts after a rebuild.
+
 ## Current `remote_write` + relevant `scrape_configs` (final state)
 
 ```yaml
@@ -128,6 +145,9 @@ remote_write:
     basic_auth:
       username: root@example.com
       password_file: /etc/prometheus/openobserve-auth/password
+    queue_config:
+      max_shards: 4
+      capacity: 2500
     write_relabel_configs:
       - source_labels: [job]
         regex: 'otel-collector|node-exporter|kube-state-metrics|kubernetes-nodes-cadvisor'

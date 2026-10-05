@@ -37,7 +37,9 @@ spec:
               memory: "256Mi"
             limits:
               cpu: "500m"
-              memory: "512Mi"
+              # 512Mi was OOMKilled once during bootstrap (remote_write backlog; capped in
+              # config/prometheus.yml). Steady state is ~380Mi.
+              memory: "768Mi"
           readinessProbe:
             httpGet:
               path: /-/ready

@@ -380,6 +380,13 @@ log "Granting repository access"
 repo_role "$NODE_SA"          roles/artifactregistry.reader  # kubelet image pulls
 repo_role "$IMAGE_UPDATER_SA" roles/artifactregistry.reader  # tag listing
 repo_role "$CI_SA"            roles/artifactregistry.writer  # CI push
+# Trivy Operator's scan jobs (KSA trivy-system/trivy-operator) pull the API image to scan it.
+# Granted to the Workload Identity principal directly - no GSA or KSA annotation needed; Trivy
+# picks up the pod's federated token from the GKE metadata server (useGCRServiceAccount).
+gcloud artifacts repositories add-iam-policy-binding "$REPO" --location="$REGION" \
+  --member="principal://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${PROJECT_ID}.svc.id.goog/subject/ns/trivy-system/sa/trivy-operator" \
+  --role=roles/artifactregistry.reader --quiet >/dev/null
+echo "    trivy-system/trivy-operator -> roles/artifactregistry.reader on $REPO"
 
 log "Configuring local docker for push"
 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet

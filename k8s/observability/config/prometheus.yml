@@ -26,6 +26,13 @@ remote_write:
     basic_auth:
       username_file: /etc/prometheus/openobserve-auth/username
       password_file: /etc/prometheus/openobserve-auth/password
+    # Cap the parallel senders. The default (max_shards 50) lets Prometheus reshard up to ~44
+    # while OpenObserve isn't up yet (first minutes of every bootstrap): each shard buffers up to
+    # `capacity` samples, and that backlog OOMKilled Prometheus at 512Mi (seen 2026-10-05). A few
+    # shards is plenty for these four jobs; the WAL keeps anything not yet sent.
+    queue_config:
+      max_shards: 4
+      capacity: 2500
     write_relabel_configs:
       - source_labels: [job]
         regex: 'otel-collector|node-exporter|kube-state-metrics|kubernetes-nodes-cadvisor'
