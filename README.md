@@ -28,6 +28,10 @@ hours, recreate it for the next one. Everything slow or stateful that doesn't ne
 (images, TLS certificate, secrets, service accounts) lives outside it and is reused - see
 [Deployment to GKE](#deployment-to-gke).
 
+The planned performance experiments - Pareto frontiers of GC settings and Quarkus build modes (JVM,
+AppCDS, native) on tail latency, CPU cost, memory footprint and startup - are described in
+[pareto-frontier.md](pareto-frontier.md). Nothing in that plan is implemented yet.
+
 ## Stack URLs
 
 Only the API is public. Every tool is reached through `./gke-port-forward.sh`, which tunnels
