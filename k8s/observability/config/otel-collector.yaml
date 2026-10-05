@@ -1,0 +1,47 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch: {}
+
+extensions:
+  # OpenObserve's OTLP endpoint needs the same root basic auth Prometheus' remote_write
+  # uses. Username and password come from the same Secret (openobserve-remote-write-credentials,
+  # see otel-collector-deployment.yaml) so it never lands in this ConfigMap.
+  basicauth/openobserve:
+    client_auth:
+      username: ${env:OPENOBSERVE_USER}
+      password: ${env:OPENOBSERVE_PASSWORD}
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    # Without this, OTLP resource attributes (service.name, k8s.pod.name, ...) don't
+    # become Prometheus labels - only metric-level attributes do by default, so every
+    # pod's metrics would collapse into one indistinguishable series.
+    resource_to_telemetry_conversion:
+      enabled: true
+  debug:
+    verbosity: basic
+  # Traces go straight to OpenObserve (org "default"); the exporter appends /v1/traces.
+  otlphttp/openobserve:
+    endpoint: http://openobserve.observability.svc.cluster.local:5080/api/default
+    auth:
+      authenticator: basicauth/openobserve
+
+service:
+  extensions: [basicauth/openobserve]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, debug]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/openobserve]

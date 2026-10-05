@@ -1,0 +1,25 @@
+kubeconfig.yml
+
+# 1Password / Environment Variables
+.env
+.env.*
+!.env.example
+
+### Claude Code ###
+.claude/
+
+### Maven ###
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### VS Code ###
+.vscode/
+
+### Python helpers ###
+__pycache__/

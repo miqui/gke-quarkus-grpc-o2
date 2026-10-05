@@ -1,0 +1,43 @@
+# The one Application gke-bootstrap.sh applies by hand ("app of apps"): it syncs k8s/argocd/apps/,
+# where every other Application lives - including Argo CD itself. After bootstrap, the whole
+# platform is defined by this repo's main branch.
+#
+# Install order comes from sync waves on the child Applications, and a wave only starts once the
+# previous one is Healthy (that needs the Application health check in argocd-values.yaml):
+#
+#   -4  argocd (self-managed), external-secrets, crossplane      controllers + CRDs
+#   -3  kyverno, platform                                         policy engine; secret store,
+#                                                                 Crossplane providers/XRD/Composition
+#   -2  kyverno-policies                                          enforce rules in place before workloads
+#   -1  observability, headlamp, polaris, trivy-operator, argocd-image-updater
+#    0  openobserve                                               needs observability's ExternalSecret
+#    1  job-manager-api                                           Cloud SQL (XR), app, Gateway
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+    targetRevision: main
+    path: k8s/argocd/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - RespectIgnoreDifferences=true
+  # Argo CD Image Updater writes the chosen image tag into the job-manager-api Application itself
+  # ("argocd" write-back: no git commits). Without this, the root app's selfHeal would put the
+  # Application back to what's in git and undo every image update.
+  ignoreDifferences:
+    - group: argoproj.io
+      kind: Application
+      name: job-manager-api
+      jsonPointers:
+        - /spec/source/kustomize

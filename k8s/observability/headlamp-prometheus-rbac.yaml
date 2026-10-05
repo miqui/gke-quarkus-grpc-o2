@@ -1,0 +1,41 @@
+# Lets Headlamp's bundled Prometheus plugin read metrics. The plugin doesn't talk to Prometheus
+# directly: Headlamp sends its requests through the Kubernetes API server's service proxy
+# (/api/v1/namespaces/observability/services/prometheus:9090/proxy/...) using Headlamp's own
+# ServiceAccount token. That ServiceAccount is bound to the read-only `view` ClusterRole, which
+# can list Services (so the plugin finds the one labelled headlamp-prometheus=true, see
+# prometheus-service.yaml) but has no `services/proxy` permission - without this Role the plugin
+# is enabled yet every chart is empty (403 Forbidden).
+#
+# Scoped as narrowly as the plugin allows: GET on the proxy subresource of the one Service, in
+# this namespace only. The API server names a proxied Service with its port ("prometheus:9090",
+# or "http:prometheus:9090" with the scheme), and RBAC matches that string, hence the three
+# spellings. Prometheus has no login of its own and Headlamp is reachable only through
+# `kubectl port-forward` (see k8s/headlamp/headlamp-values.yaml), so this adds no new exposure.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: headlamp-prometheus-proxy
+  namespace: observability
+  labels:
+    app: prometheus
+rules:
+  - apiGroups: [""]
+    resources: ["services/proxy"]
+    resourceNames: ["prometheus", "prometheus:9090", "http:prometheus:9090"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: headlamp-prometheus-proxy
+  namespace: observability
+  labels:
+    app: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: headlamp-prometheus-proxy
+subjects:
+  - kind: ServiceAccount
+    name: headlamp
+    namespace: headlamp

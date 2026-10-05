@@ -1,0 +1,55 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - resourcequota.yaml
+  - networkpolicies.yaml
+  - externalsecrets.yaml
+  - otel-collector-deployment.yaml
+  - otel-collector-service.yaml
+  - log-collector-daemonset.yaml
+  - prometheus-rbac.yaml
+  - prometheus-deployment.yaml
+  - prometheus-service.yaml
+  - headlamp-prometheus-rbac.yaml
+  - node-exporter-daemonset.yaml
+  - kube-state-metrics-rbac.yaml
+  - kube-state-metrics-deployment.yaml
+  - kube-state-metrics-service.yaml
+  - grafana-datasource-configmap.yaml
+  - grafana-dashboard-provider-configmap.yaml
+  - grafana-dashboard-json-configmap.yaml
+  - grafana-deployment.yaml
+  - grafana-service.yaml
+
+# Config for the three components that read their config once at startup and have no reload
+# mechanism (Prometheus, the OTel Collector, the log collector). Generated, not written out as
+# ConfigMap manifests, so kustomize appends a content hash to each name and rewrites the
+# Deployment/DaemonSet volume that references it: editing a file under config/ changes the name,
+# which changes the pod template, which rolls the pod. Without that, Argo CD would update the
+# ConfigMap and the running pod would keep the old config until someone restarted it by hand.
+# (Argo prunes the previous hash-named ConfigMap once the new one is in use.) The Grafana
+# ConfigMaps stay plain manifests: Grafana re-scans its dashboard directory every 30s.
+configMapGenerator:
+  - name: prometheus-config
+    namespace: observability
+    files:
+      - prometheus.yml=config/prometheus.yml
+    options:
+      labels:
+        app: prometheus
+  - name: otel-collector-config
+    namespace: observability
+    files:
+      - config.yaml=config/otel-collector.yaml
+    options:
+      labels:
+        app: otel-collector
+  - name: log-collector-config
+    namespace: observability
+    files:
+      - config.yaml=config/log-collector.yaml
+    options:
+      labels:
+        app: log-collector

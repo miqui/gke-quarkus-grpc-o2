@@ -1,0 +1,34 @@
+# Flags any ClusterRoleBinding to cluster-admin other than the built-in ones. Cluster-scoped, so
+# no namespace selector; Audit only, because existing bindings can't be "denied" retroactively
+# and the background scan is what reports them. Known/accepted bindings get a PolicyException
+# (see exceptions/).
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-cluster-admin-bindings
+  annotations:
+    policies.kyverno.io/title: Restrict cluster-admin ClusterRoleBindings
+    policies.kyverno.io/category: RBAC
+    policies.kyverno.io/severity: high
+spec:
+  validationActions: [Audit]
+  # Audit-only, so it must never block: see the note in overlays/audit-other.
+  failurePolicy: Ignore
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["rbac.authorization.k8s.io"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["clusterrolebindings"]
+  # Skip what Kubernetes and GKE create themselves.
+  matchConditions:
+    - name: not-built-in
+      expression: >-
+        !(object.metadata.name == 'cluster-admin' ||
+          object.metadata.name.startsWith('system:') ||
+          object.metadata.name.startsWith('gke-') ||
+          object.metadata.name.startsWith('gcp:'))
+  validations:
+    - expression: "object.roleRef.name != 'cluster-admin'"
+      messageExpression: >-
+        "ClusterRoleBinding " + object.metadata.name + " grants cluster-admin."

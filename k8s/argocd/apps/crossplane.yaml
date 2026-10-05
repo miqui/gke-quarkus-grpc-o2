@@ -1,0 +1,33 @@
+# Crossplane core (the package manager + composition engine). The GCP provider, functions,
+# credentials config and the PostgresInstance API are in k8s/platform/ (next wave), because
+# they need the CRDs this chart installs.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://charts.crossplane.io/stable
+      chart: crossplane
+      targetRevision: 2.4.2
+      helm:
+        releaseName: crossplane
+        valueFiles:
+          - $values/k8s/crossplane/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

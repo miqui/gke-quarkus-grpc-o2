@@ -1,0 +1,34 @@
+# Argo CD managing its own Helm release. gke-bootstrap.sh installs the same chart version with the
+# same values and release name first; from then on this Application owns it, so upgrading Argo CD
+# is a merged change to targetRevision below (and the version in gke-bootstrap.sh, for fresh
+# clusters). prune is off: a bad render must never be able to delete the controller doing the
+# deleting.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: 10.9.2
+      helm:
+        releaseName: argocd
+        valueFiles:
+          - $values/k8s/argocd/argocd-values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

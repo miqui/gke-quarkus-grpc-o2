@@ -1,0 +1,32 @@
+# Crossplane packages. Only the Cloud SQL provider is installed (not the whole GCP family - each
+# sub-provider is a separate pod with its own CRDs, and this repo only needs sql.gcp); Crossplane
+# pulls in its provider-family-gcp dependency automatically. Pinned to exact versions so a sync
+# never upgrades anything by surprise.
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-gcp-sql
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/provider-gcp-sql:v3.0.0
+  runtimeConfigRef:
+    name: provider-gcp
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-patch-and-transform
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-patch-and-transform:v0.11.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-auto-ready
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-auto-ready:v0.7.0

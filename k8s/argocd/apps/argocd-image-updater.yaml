@@ -1,0 +1,42 @@
+# Argo CD Image Updater: chart + values, plus the ImageUpdater CR (k8s/argocd/image-updater/)
+# that tells it to watch Artifact Registry for new job-manager-api tags and point the job-manager-api
+# Application at them. The CR's CRD comes from the chart, hence SkipDryRunOnMissingResource.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-image-updater
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argocd-image-updater
+      targetRevision: 1.3.1
+      helm:
+        releaseName: argocd-image-updater
+        valueFiles:
+          - $values/k8s/argocd/image-updater-values.yaml
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      path: k8s/argocd/image-updater
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - SkipDryRunOnMissingResource=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 2m

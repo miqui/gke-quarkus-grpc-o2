@@ -1,0 +1,40 @@
+# Values for the `headlamp/headlamp` chart 0.45.0 (https://headlamp.dev/ - general-purpose
+# Kubernetes web UI, not tied to the job-manager-api metrics stack), rendered by
+# k8s/argocd/apps/headlamp.yaml.
+#
+# Highest-risk tool in the cluster (it can browse everything, and with enough RBAC exec into pods
+# and edit anything), so:
+#   - no Ingress/LoadBalancer: reach it with gke-port-forward.sh (http://localhost:4466), which
+#     rides on `kubectl port-forward` - i.e. the GKE API server, locked to the operator's IP and
+#     Google IAM;
+#   - its ServiceAccount is bound to the built-in read-only `view` ClusterRole (no Secrets, no
+#     exec, no writes), not the chart's default cluster-admin. Log in with:
+#       kubectl create token headlamp -n headlamp --duration=1h
+#     For an admin session, mint a short-lived token for an identity that has it on demand
+#     rather than giving Headlamp standing admin rights - see README "Headlamp".
+
+clusterRoleBinding:
+  create: true
+  clusterRoleName: view
+
+config:
+  # The chart bundles the official Prometheus plugin (headlamp-k8s/plugins/prometheus, "Show
+  # Prometheus metrics" charts on workload detail pages) inside its image; this just keeps it
+  # served (chart default, spelled out here for visibility). The plugin auto-detects Prometheus
+  # in-cluster via the `headlamp-prometheus=true` label on k8s/observability/prometheus-service.yaml
+  # - no separate Prometheus install or per-plugin config needed. It does need permission to read
+  # through the API server's service proxy, which the read-only `view` role lacks: that one grant
+  # (GET services/proxy on the prometheus Service only) is k8s/observability/headlamp-prometheus-rbac.yaml.
+  staticPlugins:
+    enabled: true
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "128Mi"
+  limits:
+    cpu: "250m"
+    memory: "256Mi"
+
+ingress:
+  enabled: false

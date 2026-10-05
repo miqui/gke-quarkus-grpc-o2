@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - disallow-host-access.yaml
+  - require-secure-container-context.yaml
+  - require-resources.yaml
+  - restrict-image-repositories.yaml

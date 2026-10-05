@@ -1,0 +1,24 @@
+# node-exporter has to see the host: hostNetwork/hostPID, a hostPath mount of / and a hostPort
+# are how it reads node metrics. Exempt it from the host-access rule and (until it gets a
+# hardened securityContext) the container-context rule - in the audit set only; the enforce set
+# covers just the `default` namespace, which node-exporter isn't in.
+# Exceptions must live in the namespace enabled via Kyverno's `features.policyExceptions`
+# (kyverno-values.yaml).
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: node-exporter
+  namespace: kyverno
+spec:
+  policyRefs:
+    - name: disallow-host-access-audit
+      kind: ValidatingPolicy
+    - name: require-secure-container-context-audit
+      kind: ValidatingPolicy
+  # Matches the DaemonSet (autogen) and its pods - both carry the app label.
+  matchConditions:
+    - name: node-exporter-in-observability
+      expression: >-
+        object.metadata.?namespace.orValue('') == 'observability' &&
+        object.metadata.?labels.?app.orValue('') == 'node-exporter'
+  reportResult: skip

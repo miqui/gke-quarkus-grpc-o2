@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: observability
+  labels:
+    app: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.114.0
+          args:
+            - "--config=/etc/otelcol-contrib/config.yaml"
+          env:
+            - name: OPENOBSERVE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: openobserve-remote-write-credentials
+                  key: username
+            - name: OPENOBSERVE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: openobserve-remote-write-credentials
+                  key: password
+          ports:
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+            - containerPort: 8889
+              name: prom-metrics
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otelcol-contrib
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          readinessProbe:
+            tcpSocket:
+              port: 4318
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 4318
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-config

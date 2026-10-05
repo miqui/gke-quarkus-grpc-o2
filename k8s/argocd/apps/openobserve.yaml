@@ -1,0 +1,31 @@
+# OpenObserve (single-node `openobserve-standalone` chart) with
+# k8s/observability/openobserve-values.yaml. Its root credentials come from the
+# openobserve-root-credentials Secret (auth.existingRootUserSecret), which the observability
+# Application's ExternalSecret creates from Secret Manager - hence the later wave.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openobserve
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://charts.openobserve.ai
+      chart: openobserve-standalone
+      targetRevision: 0.92.2
+      helm:
+        releaseName: openobserve
+        valueFiles:
+          - $values/k8s/observability/openobserve-values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

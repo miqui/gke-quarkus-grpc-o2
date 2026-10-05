@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Constructor-injected CDI beans and shared infrastructure clients (data source, Hazelcast
+         client, meter registry, tracer), not caller-owned data: copying them is not appropriate. -->
+    <Match>
+        <Package name="~dev\.miqui\.jobmanager\.(grpc|service|repo|cache)"/>
+        <Method name="&lt;init&gt;"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+</FindBugsFilter>

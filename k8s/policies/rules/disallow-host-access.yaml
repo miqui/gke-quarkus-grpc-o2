@@ -1,0 +1,39 @@
+# Pod Security Standards "baseline" subset: no privileged containers, host namespaces, hostPath
+# volumes or hostPorts. Scope and Deny/Audit come from the overlay that includes this file.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-host-access
+  annotations:
+    policies.kyverno.io/title: Disallow host access
+    policies.kyverno.io/category: Pod Security Standards (Baseline)
+    policies.kyverno.io/severity: high
+spec:
+  validationActions: [Audit]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  # Autogen re-targets the expressions below at pod controllers, so a violating Deployment is
+  # rejected when applied (visible in the Argo CD sync) instead of failing later as
+  # ReplicaSet events.
+  autogen:
+    podControllers:
+      controllers: ["deployments", "statefulsets", "daemonsets"]
+  variables:
+    - name: containers
+      expression: "object.spec.containers + object.spec.?initContainers.orValue([])"
+  validations:
+    - expression: >-
+        !object.spec.?hostNetwork.orValue(false) &&
+        !object.spec.?hostPID.orValue(false) &&
+        !object.spec.?hostIPC.orValue(false)
+      message: "hostNetwork, hostPID and hostIPC must not be used."
+    - expression: "variables.containers.all(c, !c.?securityContext.?privileged.orValue(false))"
+      message: "Privileged containers are not allowed."
+    - expression: "object.spec.?volumes.orValue([]).all(v, !has(v.hostPath))"
+      message: "hostPath volumes are not allowed."
+    - expression: "variables.containers.all(c, c.?ports.orValue([]).all(p, p.?hostPort.orValue(0) == 0))"
+      message: "hostPort is not allowed."

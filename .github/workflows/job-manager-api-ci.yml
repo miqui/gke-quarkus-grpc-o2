@@ -1,0 +1,157 @@
+name: job-manager-api CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "pom.xml"
+      - "mvnw"
+      - ".mvn/**"
+      - "quality/**"
+      - "scripts/quality-summary.py"
+      - "scripts/test_quality_summary.py"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/job-manager-api-ci.yml"
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Image: us-central1-docker.pkg.dev/<project>/springboot-grpc-o2/job-manager-api (Artifact Registry;
+# the repository keeps its original name, only the image is new).
+# Pushing authenticates keylessly: GitHub's OIDC token is exchanged through Workload Identity
+# Federation for a short-lived token of the ci-springboot-grpc-o2 service account, which can only write to
+# that one repository. The federation provider only accepts tokens for this repo's main branch,
+# so pull requests (which never push) can't obtain it either. Set up by gke-deploy.sh, which
+# prints the two repository variables below.
+env:
+  REGISTRY: us-central1-docker.pkg.dev
+  IMAGE: us-central1-docker.pkg.dev/k8s-dev-412419/springboot-grpc-o2/job-manager-api
+
+jobs:
+  quality-gates:
+    name: API quality gates
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      image: ${{ github.event_name == 'workflow_dispatch' || steps.changes.outputs.image == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Keep the required check on every PR; filter its expensive steps instead of the workflow.
+      # PRs compare against their base; pushes compare against the commit before the whole push.
+      - name: Detect relevant changes
+        id: changes
+        if: github.event_name != 'workflow_dispatch'
+        uses: dorny/paths-filter@v3
+        with:
+          base: main
+          filters: |
+            quality:
+              - "src/**"
+              - "pom.xml"
+              - "mvnw"
+              - ".mvn/**"
+              - "quality/**"
+              - "scripts/quality-summary.py"
+              - "scripts/test_quality_summary.py"
+              - "Dockerfile"
+              - ".dockerignore"
+              - ".github/workflows/job-manager-api-ci.yml"
+            image:
+              - "src/main/**"
+              - "pom.xml"
+              - "mvnw"
+              - ".mvn/**"
+              - "Dockerfile"
+              - ".dockerignore"
+
+      - name: Skip unrelated changes
+        if: github.event_name != 'workflow_dispatch' && steps.changes.outputs.quality == 'false'
+        run: echo "API quality gates skipped - no API, build, or quality inputs changed." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up Java 21
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.quality == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Test quality summary
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.quality == 'true'
+        run: python3 -m unittest discover -s scripts -p 'test_quality_summary.py'
+
+      # Reports always start from a clean build. Dev Services start Postgres with Testcontainers
+      # (Docker is available on ubuntu-latest).
+      - name: Verify tests and API quality
+        id: verify
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.quality == 'true'
+        run: ./mvnw -B -ntp clean verify
+
+      - name: Summarize API quality
+        if: always() && (steps.verify.outcome == 'success' || steps.verify.outcome == 'failure')
+        env:
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
+        run: python3 scripts/quality-summary.py >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test reports
+        if: failure() && steps.verify.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+  build-and-push:
+    needs: quality-gates
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.quality-gates.outputs.image == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Authenticate to Google Cloud
+        id: gcp
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_CI_SA }}
+          token_format: access_token
+
+      - name: Log in to Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.gcp.outputs.access_token }}
+
+      # <UTC yyyymmddHHMMSS>-<7-char sha>: sorts lexically by build time (Argo CD Image Updater's
+      # "alphabetical" strategy picks the highest tag) while still identifying the commit.
+      - name: Compute image tag
+        id: meta
+        run: echo "tag=$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      # amd64 only: GKE's e2 nodes are x86_64.
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

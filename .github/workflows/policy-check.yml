@@ -1,0 +1,75 @@
+name: Kyverno policy check
+
+# Runs the same policies the cluster enforces (k8s/policies/) against the manifests in k8s/, before
+# merge, via check-policies.sh - see that script for what is blocking (the enforce set) versus
+# only reported (the audit set). Then a report-only Polaris audit (polaris-audit.sh) with the
+# in-cluster dashboard's config. Unlike the two service workflows this one also runs on pull
+# requests: catching a non-compliant manifest at review time is the point.
+on:
+  pull_request:
+    paths:
+      - "k8s/**"
+      - "check-policies.sh"
+      - "polaris-audit.sh"
+      - ".github/policy-fixtures/**"
+      - ".github/workflows/policy-check.yml"
+  push:
+    branches: [main]
+    paths:
+      - "k8s/**"
+      - "check-policies.sh"
+      - "polaris-audit.sh"
+      - ".github/policy-fixtures/**"
+      - ".github/workflows/policy-check.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  check-policies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Pinned to the Kyverno version the cluster runs (k8s/argocd/apps/kyverno.yaml: chart 3.9.1
+      # = Kyverno v1.19.1), so CI evaluates policies the way the cluster does. Bump the two
+      # together. The SHA-256 is from the release's checksums.txt. kubectl (used for
+      # `kubectl kustomize`) is preinstalled on GitHub's ubuntu runners.
+      - name: Install Kyverno CLI
+        env:
+          KYVERNO_VERSION: v1.19.1
+          KYVERNO_SHA256: b38228f367fc0fdc2b08f4c83ea50ac5f16c60ff8d62d76a66157c33c47b70ae
+        run: |
+          set -euo pipefail
+          archive="kyverno-cli_${KYVERNO_VERSION}_linux_x86_64.tar.gz"
+          curl -fsSL -o "${archive}" "https://github.com/kyverno/kyverno/releases/download/${KYVERNO_VERSION}/${archive}"
+          echo "${KYVERNO_SHA256}  ${archive}" | sha256sum -c -
+          tar -xzf "${archive}" kyverno
+          sudo install -m 0755 kyverno /usr/local/bin/kyverno
+          kyverno version
+
+      - name: Check manifests against the Kyverno policies
+        run: ./check-policies.sh
+
+      # Pinned to the Polaris version the in-cluster dashboard runs (k8s/polaris/polaris-values.yaml
+      # image.tag, chart 6.0.1 in k8s/argocd/apps/polaris.yaml). Bump them together. The SHA-256 is
+      # from the release's checksums.txt. helm is preinstalled on GitHub's ubuntu runners.
+      - name: Install Polaris CLI
+        env:
+          POLARIS_VERSION: 10.2.4
+          POLARIS_SHA256: 17eac26d6c3ec7349c8446ba464734728207e3f1e7487f8dce617afb641c46f2
+        run: |
+          set -euo pipefail
+          cd "$(mktemp -d)"   # keep the archive and binary out of the checkout
+          archive="polaris_${POLARIS_VERSION}_linux_amd64.tar.gz"
+          curl -fsSL -o "${archive}" "https://github.com/FairwindsOps/polaris/releases/download/v${POLARIS_VERSION}/${archive}"
+          echo "${POLARIS_SHA256}  ${archive}" | sha256sum -c -
+          tar -xzf "${archive}" polaris
+          sudo install -m 0755 polaris /usr/local/bin/polaris
+          polaris version
+
+      # Report only (score + failed checks in the job summary); never fails the build.
+      - name: Polaris audit of k8s/ (report only)
+        run: ./polaris-audit.sh

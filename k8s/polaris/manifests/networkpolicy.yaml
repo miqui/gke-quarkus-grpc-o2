@@ -1,0 +1,10 @@
+# Nothing in the cluster needs to call the Polaris dashboard; the only way in is
+# `kubectl port-forward`, which NetworkPolicy doesn't apply to. Deny all other ingress.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: polaris
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]

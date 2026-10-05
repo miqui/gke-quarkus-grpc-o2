@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hazelcast
+  labels:
+    app: hazelcast
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hazelcast
+  template:
+    metadata:
+      labels:
+        app: hazelcast
+    spec:
+      securityContext:
+        # 100:101 is the `hazelcast` user in hazelcast/hazelcast, and coincidentally also
+        # `curl_user` in curlimages/curl - so one pod-level identity covers the init container
+        # writing the javaagent jar into the shared emptyDir and the container reading it.
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      # Downloads the JMX-to-Prometheus javaagent into a volume shared with the hazelcast
+      # container, once per pod start - avoids needing a custom Hazelcast Docker image just to
+      # bake the jar in. See the "hazelcast" container's JAVA_OPTS for how it's attached.
+      initContainers:
+        - name: jmx-exporter-agent
+          image: curlimages/curl:8.22.0
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          command:
+            - sh
+            - -c
+            - "curl -fsSL -o /jmx-exporter/jmx_prometheus_javaagent.jar https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar"
+          volumeMounts:
+            - name: jmx-exporter-agent
+              mountPath: /jmx-exporter
+      containers:
+        - name: hazelcast
+          image: hazelcast/hazelcast:5.7.0-slim
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: HZ_CLUSTERNAME
+              value: "message-service-cache"
+            # A single standalone member: nothing to discover. Left on, Hazelcast detects Kubernetes
+            # and polls the API server for peer endpoints, which the default-deny egress policy
+            # (rightly) blocks - it retried until the probes killed it. Disabling beats granting it
+            # API access it doesn't need.
+            - name: HZ_NETWORK_JOIN_AUTODETECTION_ENABLED
+              value: "false"
+            # metrics.jmx.enabled registers Hazelcast's cluster/map/operation stats as JMX MBeans
+            # (com.hazelcast:*) for the javaagent below to pick up - see
+            # k8s/hazelcast-jmx-exporter-configmap.yaml. Port 9404 is jmx_prometheus_javaagent's
+            # own HTTP listener, unrelated to Hazelcast's member port (5701).
+            - name: JAVA_OPTS
+              value: "-Dhazelcast.metrics.jmx.enabled=true -javaagent:/jmx-exporter/jmx_prometheus_javaagent.jar=9404:/etc/jmx-exporter/config.yaml"
+          ports:
+            - containerPort: 5701
+              name: hazelcast
+            - containerPort: 9404
+              name: metrics
+          volumeMounts:
+            - name: jmx-exporter-agent
+              mountPath: /jmx-exporter
+            - name: jmx-exporter-config
+              mountPath: /etc/jmx-exporter
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # JVM + JMX agent startup under the 500m CPU limit takes ~50-60s on an e2 node, and the
+          # health endpoint answers slowly while it does: the default 1s timeout with a 65s budget
+          # got the pod killed (exit 143) mid-start on GKE. 3s timeout, up to 2 minutes.
+          startupProbe:
+            httpGet:
+              path: /hazelcast/health/node-state
+              port: 5701
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /hazelcast/health/ready
+              port: 5701
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /hazelcast/health/node-state
+              port: 5701
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: jmx-exporter-agent
+          emptyDir: {}
+        - name: jmx-exporter-config
+          configMap:
+            name: hazelcast-jmx-exporter-config

@@ -1,0 +1,120 @@
+global:
+  scrape_interval: 15s
+
+# Replicates the job-manager-api metrics (job "otel-collector" below - the API's
+# Micrometer gRPC/JVM/Agroal/job metrics pushed via OTLP, see application.properties) plus
+# cluster ops metrics (node-exporter, kube-state-metrics - the same jobs behind
+# the "Cluster ops" Grafana dashboard) into OpenObserve (see
+# k8s/observability/openobserve-values.yaml), which exposes a Prometheus
+# remote_write-compatible ingestion endpoint. username_file/password_file are mounted from
+# the openobserve-remote-write-credentials Secret (External Secrets, see
+# externalsecrets.yaml and prometheus-deployment.yaml) so the credentials never have to
+# live in this ConfigMap.
+#
+# write_relabel_configs keeps only these jobs: an earlier attempt at forwarding every
+# scraped job (in particular kubernetes-nodes-cadvisor's per-container series) was
+# high-cardinality enough to overflow OpenObserve's single-node in-memory MemTable -
+# confirmed live: every write request failed with HTTP 400
+# {"code":400,"message":"Error# MemoryTableOverflowError"} until this relabeling was
+# added. node-exporter/kube-state-metrics are being added back in deliberately, one
+# step at a time, verifying no overflow before adding kubernetes-nodes-cadvisor (by
+# far the highest-cardinality job) on top - see openobserve-values.yaml's resources,
+# bumped in the same step, and its 3-day ZO_COMPACT_DATA_RETENTION_DAYS (OpenObserve's
+# PVC is a fixed 5Gi persistent disk; unbounded retention on wider data would fill it).
+remote_write:
+  - url: http://openobserve.observability.svc.cluster.local:5080/api/default/prometheus/api/v1/write
+    basic_auth:
+      username_file: /etc/prometheus/openobserve-auth/username
+      password_file: /etc/prometheus/openobserve-auth/password
+    write_relabel_configs:
+      - source_labels: [job]
+        regex: 'otel-collector|node-exporter|kube-state-metrics|kubernetes-nodes-cadvisor'
+        action: keep
+
+scrape_configs:
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector.observability.svc.cluster.local:8889']
+    metric_relabel_configs:
+      # Quarkus' Micrometer->OTel bridge exports every timer with SLO buckets twice: as the
+      # histogram (<name>_milliseconds_bucket, what the dashboards use) and as one extra gauge
+      # series per bucket (<name>_histogram{le=...}). The gauges only double the series count
+      # OpenObserve's MemTable has to hold.
+      - source_labels: [__name__]
+        regex: '.+_histogram'
+        action: drop
+
+  - job_name: 'kube-state-metrics'
+    static_configs:
+      - targets: ['kube-state-metrics.observability.svc.cluster.local:8080']
+
+  # OpenObserve's own self-monitoring metrics (config.ZO_PROMETHEUS_ENABLED in
+  # k8s/observability/openobserve-values.yaml - off by default, confirmed live: with it
+  # off, /metrics returns HTTP 200 with an empty body). Feeds the "OpenObserve Ops"
+  # Grafana dashboard only - not remote_written back into OpenObserve itself.
+  - job_name: 'openobserve'
+    static_configs:
+      - targets: ['openobserve.observability.svc.cluster.local:5080']
+
+  # Postgres is Cloud SQL (k8s/postgres.yaml); postgres-exporter is a Deployment in the
+  # default namespace connecting to it over its private IP.
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter.default.svc.cluster.local:9187']
+
+  # jmx_prometheus_javaagent attached to the Hazelcast member's own JVM (see
+  # k8s/hazelcast-deployment.yaml) - Management Center's own Prometheus exporter
+  # (hazelcast.mc.prometheusExporter.enabled, see
+  # https://docs.hazelcast.com/management-center/5.11/integrate/prometheus-monitoring) turned
+  # out to require a paid Enterprise license (confirmed live: 402 LICENSE_REQUIRED), so this
+  # scrapes the member directly instead - same underlying metrics, no license needed.
+  - job_name: 'hazelcast'
+    static_configs:
+      - targets: ['hazelcast.default.svc.cluster.local:9404']
+
+  # Trivy Operator (k8s/argocd/apps/trivy-operator.yaml): per-workload counts of
+  # vulnerabilities, config-audit/RBAC/infra findings, exposed secrets and compliance status.
+  # Feeds the "Trivy Security" Grafana dashboard only - deliberately not in the remote_write
+  # keep list above (the counts change only when a scan finishes, and OpenObserve's MemTable
+  # headroom is reserved for the ops jobs). The chart's Service is headless (clusterIP: None),
+  # so its name resolves straight to the operator pod and its port-80 -> targetPort mapping
+  # never applies: scrape the container's own metrics port, 8080.
+  - job_name: 'trivy-operator'
+    static_configs:
+      - targets: ['trivy-operator.trivy-system.svc.cluster.local:8080']
+
+  # node-exporter runs hostNetwork, so its pod IP == the node's IP; scraped directly
+  - job_name: 'node-exporter'
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: ['observability']
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: node-exporter
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        target_label: node
+      - source_labels: [__address__]
+        regex: '(.+):\d+'
+        target_label: __address__
+        replacement: '${1}:9100'
+
+  # Per-container resource usage (CPU/memory), scraped via the API server's proxy to each
+  # kubelet's cAdvisor endpoint - avoids needing direct network access to kubelet's port 10250.
+  - job_name: 'kubernetes-nodes-cadvisor'
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecure_skip_verify: true
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor

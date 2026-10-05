@@ -1,0 +1,29 @@
+# Pins the Cloud SQL provider's ServiceAccount to a fixed name (by default it's named after the
+# package revision and changes on every upgrade) and annotates it for Workload Identity, so the
+# provider acts as the crossplane-gcp GSA (roles/cloudsql.admin + compute.networkUser, granted in
+# gke-deploy.sh). Pairs with `credentials.source: InjectedIdentity` in the ClusterProviderConfig.
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: provider-gcp
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  serviceAccountTemplate:
+    metadata:
+      name: provider-gcp
+      annotations:
+        iam.gke.io/gcp-service-account: crossplane-gcp@k8s-dev-412419.iam.gserviceaccount.com
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+            - name: package-runtime
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+                limits:
+                  memory: 1Gi

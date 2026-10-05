@@ -1,0 +1,93 @@
+# Values for the `fairwinds-stable/polaris` chart 6.0.1 (https://polaris.docs.fairwinds.com/ -
+# best-practice and misconfiguration report for everything running in the cluster), rendered by
+# k8s/argocd/apps/polaris.yaml.
+#
+# Polaris complements Kyverno rather than duplicating it: Kyverno (k8s/policies/) decides at
+# admission time, Polaris scores what is already running - third-party charts included - across
+# reliability, efficiency and security checks, in one dashboard. So:
+#   - dashboard only, no admission webhook: Kyverno stays the single admission controller;
+#   - no Ingress/LoadBalancer and no login: reach it with gke-port-forward.sh
+#     (http://localhost:8082), i.e. through the GKE API server, locked to the operator's IP and
+#     Google IAM;
+#   - its ServiceAccount gets the chart's read-only RBAC: the built-in `view` ClusterRole (no
+#     Secrets) plus get/list on nodes and RBAC objects (for the RBAC checks). No writes, no exec.
+
+image:
+  # Pinned (chart default is the chart's appVersion with pullPolicy Always). Fairwinds tags images
+  # with a leading `v`; the chart adds it to its appVersion default, but not to an explicit tag.
+  tag: "v10.2.4"
+  pullPolicy: IfNotPresent
+
+dashboard:
+  enable: true
+  # One replica and no PodDisruptionBudget: an internal report on a short-lived dev cluster; a
+  # PDB would only get in the way of cluster-autoscaler scale-downs.
+  replicas: 1
+  pdb:
+    enable: false
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    # Chart sets no limits; Kyverno's require-resources wants them.
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+  # Merged into the chart's already-hardened default (non-root, read-only root fs, drop ALL, no
+  # privilege escalation); it only lacks a seccomp profile, which Kyverno's
+  # require-secure-container-context wants.
+  containerSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  ingress:
+    enabled: false
+
+webhook:
+  enable: false
+
+# Built-in checks and severities are kept (mergeConfig); only `exemptions` is replaced. Polaris's
+# merge overwrites lists wholesale, so this is the complete exemption list - its upstream default
+# is mostly kops/EKS kube-system components, covered here by exempting the namespace.
+mergeConfig: true
+config:
+  exemptions:
+    # GKE-managed namespaces: nothing there is ours to fix. A namespace-only exemption (no
+    # controllerNames, no rules) exempts every check for every workload in it.
+    - namespace: kube-system
+    - namespace: kube-node-lease
+    - namespace: kube-public
+    - namespace: gmp-system
+    - namespace: gmp-public
+    - namespace: gke-managed-system
+    - namespace: gke-managed-cim
+    - namespace: gke-managed-networking-dra-driver
+    - namespace: gke-managed-volumepopulator
+    - namespace: gke-gmp-system
+    # sensitiveContainerEnvVar / sensitiveConfigmapContent match on key *names* (containing
+    # "key", "token", "secret", ...). Checked on the live cluster (2026-09-27), these hold no
+    # secret values - header names, feature flags, empty defaults and the *names* of Secrets - so
+    # they're exempt from that one rule only.
+    - namespace: observability
+      controllerNames: [openobserve]
+      rules: [sensitiveConfigmapContent]
+    - namespace: trivy-system
+      controllerNames: [trivy-operator-config]
+      rules: [sensitiveConfigmapContent]
+    - namespace: crossplane-system
+      controllerNames: [crossplane]
+      rules: [sensitiveContainerEnvVar]
+    # Same exceptions as Kyverno's (k8s/policies/exceptions/): these DaemonSets read the node by
+    # design, so host access and running as root are expected - every other check still applies.
+    - namespace: observability
+      controllerNames: [node-exporter]
+      rules:
+        - hostNetworkSet
+        - hostPIDSet
+        - hostPathSet
+        - hostPortSet
+        - runAsRootAllowed
+    - namespace: observability
+      controllerNames: [log-collector]
+      rules:
+        - hostPathSet
+        - runAsRootAllowed

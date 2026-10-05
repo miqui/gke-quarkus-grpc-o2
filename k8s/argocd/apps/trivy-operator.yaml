@@ -1,0 +1,55 @@
+# ArgoCD Application installing the Trivy Operator (https://github.com/aquasecurity/trivy-operator)
+# from its upstream Helm chart, owned by Argo end to end like every other component, so bumping
+# the chart version or editing the values is a merged change like any other. See TRIVY.md.
+#
+# Two sources: this repo (only as a `$values` ref, so k8s/trivy-operator/trivy-operator-values.yaml
+# lives in git next to the other chart values) and the chart itself.
+#
+# Metrics: the chart's `trivy-operator` Service is scraped by the Prometheus in k8s/observability/
+# (job "trivy-operator" in config/prometheus.yml) and drawn by the "Trivy Security" Grafana
+# dashboard. No ServiceMonitor - this cluster's Prometheus isn't the Operator flavour.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trivy-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://aquasecurity.github.io/helm-charts/
+      chart: trivy-operator
+      # Chart 0.36.0 = trivy-operator v0.34.0, Trivy 0.74.0.
+      targetRevision: 0.36.0
+      helm:
+        releaseName: trivy-operator
+        valueFiles:
+          - $values/k8s/trivy-operator/trivy-operator-values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trivy-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # Server-side apply for the chart's CRDs (VulnerabilityReport etc.): no
+      # last-applied-configuration annotation to outgrow as upstream CRDs grow, and field
+      # ownership doesn't fight the operator, which updates objects it created itself.
+      - ServerSideApply=true
+      # The chart ships ClusterComplianceReport objects alongside the CRD that defines them; on
+      # the first sync the dry run can't resolve that kind yet.
+      - SkipDryRunOnMissingResource=true
+    # ...and so the first attempt can still fail on that ordering; a retry once the CRDs are
+    # established succeeds.
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 2m

@@ -1,0 +1,17 @@
+# Default credentials for every namespaced GCP managed resource: the provider pod's own ambient
+# Google credentials, i.e. the Workload Identity mapping set up by
+# crossplane-runtime-config.yaml. No service-account key exists anywhere.
+#
+# The CRD comes from the provider package installed in wave 0, hence the later wave and
+# SkipDryRunOnMissingResource (the dry run before the first sync can't know the kind yet).
+apiVersion: gcp.m.upbound.io/v1beta1
+kind: ClusterProviderConfig
+metadata:
+  name: default
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  projectID: k8s-dev-412419
+  credentials:
+    source: InjectedIdentity

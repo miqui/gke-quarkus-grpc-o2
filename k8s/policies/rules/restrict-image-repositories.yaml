@@ -1,0 +1,73 @@
+# Images must come from an allowlisted repository - exact repository, not just registry, so a
+# lookalike Docker Hub org or a typo'd path is rejected. The tag/digest is ignored here (pinning
+# is disallow-latest-tag's job). References are normalized first: `postgres:16-alpine` is
+# `docker.io/library/postgres`, `prom/prometheus:v2` is `docker.io/prom/prometheus`.
+#
+# Adding a new image to any covered namespace means adding its repository below. One list serves
+# both the enforce (`default`) and audit (`observability`, `headlamp`, `polaris`) copies of this policy.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-image-repositories
+  annotations:
+    policies.kyverno.io/title: Restrict image repositories
+    policies.kyverno.io/category: Supply Chain
+    policies.kyverno.io/severity: medium
+spec:
+  validationActions: [Audit]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  autogen:
+    podControllers:
+      controllers: ["deployments", "statefulsets", "daemonsets"]
+  variables:
+    - name: containers
+      expression: "object.spec.containers + object.spec.?initContainers.orValue([])"
+    - name: allowed
+      expression: >-
+        [
+          'us-central1-docker.pkg.dev/k8s-dev-412419/springboot-grpc-o2/job-manager-api',
+          'docker.io/library/postgres',
+          'docker.io/library/busybox',
+          'docker.io/library/nginx',
+          'docker.io/curlimages/curl',
+          'docker.io/hazelcast/hazelcast',
+          'quay.io/prometheuscommunity/postgres-exporter',
+          'docker.io/grafana/grafana',
+          'docker.io/prom/prometheus',
+          'docker.io/prom/node-exporter',
+          'docker.io/otel/opentelemetry-collector-contrib',
+          'registry.k8s.io/kube-state-metrics/kube-state-metrics',
+          'o2cr.ai/openobserve/openobserve',
+          'ghcr.io/headlamp-k8s/headlamp',
+          'us-docker.pkg.dev/fairwinds-ops/oss/polaris'
+        ]
+    # Canonical repository of every container. The single-element `[x].map(name, ...)[0]`
+    # pattern is just CEL's way of binding a local name. Steps: drop @digest; drop :tag (a colon
+    # in the *last* path segment - a colon earlier is a registry port); then qualify Docker Hub
+    # names. The first path segment is a registry host only if there is more than one segment
+    # and it contains '.' or ':' or is `localhost`.
+    - name: repos
+      expression: >-
+        variables.containers.map(c,
+          [c.image.split('@')[0]].map(ref,
+            [ref.split('/')[ref.split('/').size() - 1].contains(':')
+               ? ref.substring(0, ref.lastIndexOf(':')) : ref].map(repo,
+              [repo.split('/')].map(parts,
+                (parts.size() > 1 &&
+                  (parts[0].contains('.') || parts[0].contains(':') || parts[0] == 'localhost'))
+                  ? repo
+                  : (parts.size() == 1 ? 'docker.io/library/' + repo : 'docker.io/' + repo)
+              )[0]
+            )[0]
+          )[0]
+        )
+  validations:
+    - expression: "variables.repos.all(r, r in variables.allowed)"
+      messageExpression: >-
+        "Image repository not on the allowlist (k8s/policies/rules/restrict-image-repositories.yaml): " +
+        variables.repos.filter(r, !(r in variables.allowed)).join(', ')

@@ -1,0 +1,26 @@
+# Deliberately non-compliant. check-policies.sh requires the enforce policies to REJECT this - if
+# they ever stop matching (a renamed namespace selector, a policy that fails to load), the check
+# would otherwise pass vacuously. Never applied to a cluster; not referenced by any kustomization.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: policy-check-violator
+  namespace: default
+  labels:
+    app: policy-check-violator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: policy-check-violator
+  template:
+    metadata:
+      labels:
+        app: policy-check-violator
+    spec:
+      hostNetwork: true
+      containers:
+        - name: violator
+          image: evil.example.com/policy-check/violator:latest
+          securityContext:
+            privileged: true

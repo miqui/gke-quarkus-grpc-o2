@@ -1,0 +1,54 @@
+# Values for the `kyverno/kyverno` chart (https://kyverno.io - policy engine; the policies
+# themselves live in k8s/policies/ and are applied by their own Argo CD Application). Rendered by
+# k8s/argocd/apps/kyverno.yaml, chart 3.9.1 = Kyverno v1.19.1 (tested Kubernetes range
+# 1.33-1.35; GKE's stable channel is within or close to it).
+#
+# Left at chart defaults on purpose: one replica per controller (the chart's HA guidance is 2-3,
+# which is overkill for a dev cluster) and its default resource requests (about 400m CPU / 320Mi
+# memory across the four controllers).
+#
+# GKE private nodes: the control plane reaches the admission webhook on port 9443 only because
+# gke-deploy.sh adds a firewall rule for it - without that, every matching create/update times
+# out.
+
+features:
+  # Required for the PolicyExceptions in k8s/policies/exceptions/ to take effect at all, and
+  # only honoured from the namespace named here (cluster admins, not app namespaces).
+  policyExceptions:
+    enabled: true
+    namespace: kyverno
+
+config:
+  # Safety net independent of any policy's own scope: the admission webhook never sees these
+  # namespaces, so an unhealthy Kyverno can't block system, GitOps or platform changes. (The
+  # kyverno namespace itself is excluded by the chart's excludeKyvernoNamespace default.) This
+  # replaces the chart's default list, so kube-system is restated. Policies only match
+  # `default`, `observability` and `headlamp` anyway; this limits the blast radius if that
+  # ever widens or a policy is mis-scoped.
+  webhooks:
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - argocd
+            - crossplane-system
+            - external-secrets
+            - gke-managed-system
+            - gke-managed-cim
+            - gmp-public
+
+# The reports controller can only list/watch the kinds it was granted RBAC for. Without this,
+# restrict-cluster-admin-bindings shows `ready: false` ("missing permissions ... clusterrolebindings")
+# and its background scan produces no results or ClusterPolicyReport - admission-time auditing
+# still worked, which is what made it easy to miss. Found by running Kyverno for real; the
+# Kyverno CLI doesn't model controller RBAC. Add a rule here for any other kind a policy matches
+# that the chart doesn't already grant.
+reportsController:
+  rbac:
+    clusterRole:
+      extraResources:
+        - apiGroups: ["rbac.authorization.k8s.io"]
+          resources: ["clusterrolebindings"]
+          verbs: ["get", "list", "watch"]

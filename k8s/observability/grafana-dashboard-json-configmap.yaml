@@ -1,0 +1,3092 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-json
+  namespace: observability
+  labels:
+    app: grafana
+data:
+  openobserve-ops.json: |
+    {
+      "title": "OpenObserve Ops",
+      "uid": "openobserve-ops",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "10s",
+      "time": { "from": "now-30m", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "OpenObserve Up",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "up{job=\"openobserve\"}", "refId": "A" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+              ]
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "Disk Usage",
+          "type": "gauge",
+          "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent", "min": 0, "max": 100,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 70 },
+                  { "color": "red", "value": 85 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            { "expr": "zo_node_disk_usage{job=\"openobserve\"} / zo_node_disk_total{job=\"openobserve\"} * 100", "refId": "A" }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Process Memory (RSS)",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "bytes" } },
+          "targets": [
+            { "expr": "process_resident_memory_bytes{job=\"openobserve\"}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Open File Descriptors",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "process_open_fds{job=\"openobserve\"}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Uptime",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "s" } },
+          "targets": [
+            { "expr": "time() - process_start_time_seconds{job=\"openobserve\"}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Ingest Rate (records/s)",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            { "expr": "sum(rate(zo_ingest_records{job=\"openobserve\"}[5m]))", "refId": "A" }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "HTTP Request Rate by Endpoint",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            { "expr": "sum(rate(zo_http_incoming_requests{job=\"openobserve\"}[5m])) by (endpoint, status)", "legendFormat": "{{endpoint}} ({{status}})", "refId": "A" }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "HTTP Response Time p95/p99 by Endpoint",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "s" } },
+          "targets": [
+            { "expr": "histogram_quantile(0.95, sum(rate(zo_http_response_time_bucket{job=\"openobserve\"}[5m])) by (le, endpoint))", "legendFormat": "p95 {{endpoint}}", "refId": "A" },
+            { "expr": "histogram_quantile(0.99, sum(rate(zo_http_response_time_bucket{job=\"openobserve\"}[5m])) by (le, endpoint))", "legendFormat": "p99 {{endpoint}}", "refId": "B" }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "Ingest Rate by Stream Type (records/s)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            { "expr": "sum(rate(zo_ingest_records{job=\"openobserve\"}[5m])) by (stream_type)", "legendFormat": "{{stream_type}}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "Ingest Rate by Stream Type (bytes/s)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "Bps" } },
+          "targets": [
+            { "expr": "sum(rate(zo_ingest_bytes{job=\"openobserve\"}[5m])) by (stream_type)", "legendFormat": "{{stream_type}}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "In-Memory MemTable Size",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "bytes" } },
+          "description": "Watch this against OpenObserve's memory limit (see k8s/observability/openobserve-values.yaml resources.limits.memory) - this is what overflowed (HTTP 400 MemoryTableOverflowError) before remote_write was scoped down / OpenObserve's resources were bumped.",
+          "targets": [
+            { "expr": "zo_ingest_memtable_bytes{job=\"openobserve\"}", "legendFormat": "memtable", "refId": "A" }
+          ]
+        },
+        {
+          "id": 12,
+          "title": "WAL Used Bytes by Stream Type",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "bytes" } },
+          "targets": [
+            { "expr": "sum(zo_ingest_wal_used_bytes{job=\"openobserve\"}) by (stream_type)", "legendFormat": "{{stream_type}}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 13,
+          "title": "Process CPU Usage",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "percent" } },
+          "targets": [
+            { "expr": "rate(process_cpu_seconds_total{job=\"openobserve\"}[5m]) * 100", "legendFormat": "cpu", "refId": "A" }
+          ]
+        },
+        {
+          "id": 14,
+          "title": "Disk Usage vs Total",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "bytes" } },
+          "targets": [
+            { "expr": "zo_node_disk_usage{job=\"openobserve\"}", "legendFormat": "used", "refId": "A" },
+            { "expr": "zo_node_disk_total{job=\"openobserve\"}", "legendFormat": "total", "refId": "B" }
+          ]
+        }
+      ]
+    }
+  job-manager-api.json: |
+    {
+      "title": "job-manager-api API",
+      "uid": "job-manager-api",
+      "description": "Per-API gRPC/JVM/Agroal connection-pool metrics. The Service dropdown filters every series on service_name.",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "10s",
+      "time": {
+        "from": "now-15m",
+        "to": "now"
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "service",
+            "label": "Service",
+            "type": "custom",
+            "query": "job-manager-api",
+            "multi": true,
+            "includeAll": true,
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [
+              {
+                "selected": true,
+                "text": "All",
+                "value": "$__all"
+              },
+              {
+                "selected": false,
+                "text": "job-manager-api",
+                "value": "job-manager-api"
+              }
+            ]
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Ready Pods",
+          "description": "Pods passing readiness for the selected service(s). Replaces the old 'Service Up' panel, which only reflected whether the OTel Collector was being scraped.",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 0,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_pod_status_ready{condition=\"true\",namespace=\"default\",pod=~\"$service-.*\"}) or vector(0)",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "DB Pool Connections (open/busy/idle)",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 4,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum(agroal_active_count{service_name=~\"$service\"}) + sum(agroal_available_count{service_name=~\"$service\"})",
+              "refId": "A",
+              "legendFormat": "open"
+            },
+            {
+              "expr": "sum(agroal_active_count{service_name=~\"$service\"})",
+              "refId": "B",
+              "legendFormat": "busy"
+            },
+            {
+              "expr": "sum(agroal_available_count{service_name=~\"$service\"})",
+              "refId": "C",
+              "legendFormat": "idle"
+            }
+          ],
+          "description": "Agroal: open = connections in the pool (max 10 per pod), busy = checked out by a request (agroal_active_count), idle = open and waiting (agroal_available_count)."
+        },
+        {
+          "id": 3,
+          "title": "Process CPU Usage (hottest pod)",
+          "type": "gauge",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 8,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1
+            }
+          },
+          "targets": [
+            {
+              "expr": "max(process_cpu_usage{service_name=~\"$service\"})",
+              "refId": "A"
+            }
+          ],
+          "description": "process_cpu_usage: share of the CPUs the JVM sees (the container limit, rounded up)."
+        },
+        {
+          "id": 4,
+          "title": "GC Pause Time Share (worst pod)",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit"
+            }
+          },
+          "targets": [
+            {
+              "expr": "max(sum by (k8s_pod_name) (rate(jvm_gc_pause_milliseconds_sum{service_name=~\"$service\"}[1m])) / 1000)",
+              "refId": "A"
+            }
+          ],
+          "description": "Share of wall-clock time the JVM spent in GC pauses over the last minute (replaces the Python event-loop lag panel). A few percent is normal; sustained >10% means the heap is too small for the load."
+        },
+        {
+          "id": 5,
+          "title": "Request Rate by Method",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\"}[1m])) by (service_name, rpc_method)",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Average Request Latency by Method",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_sum{service_name=~\"$service\"}[1m])) by (service_name, rpc_method) / sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\"}[1m])) by (service_name, rpc_method)",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "JVM Memory by Pod",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 12
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (k8s_pod_name) (jvm_memory_used_bytes{service_name=~\"$service\",area=\"heap\"})",
+              "refId": "A",
+              "legendFormat": "heap {{k8s_pod_name}}"
+            },
+            {
+              "expr": "sum by (k8s_pod_name) (jvm_memory_used_bytes{service_name=~\"$service\",area=\"nonheap\"})",
+              "refId": "B",
+              "legendFormat": "non-heap {{k8s_pod_name}}"
+            }
+          ],
+          "description": "Heap and non-heap (metaspace, code cache) in use. The heap ceiling is 75% of the container memory limit (-XX:MaxRAMPercentage); see API RED & Saturation for the container working set against its limit."
+        },
+        {
+          "id": 8,
+          "title": "Error Rate by Method",
+          "description": "grpc_errors_total is only created on the first error, so this panel is empty (not zero) until a request returns an error status.",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 12
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\"}[5m])) by (service_name, rpc_method)",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+  cluster-ops.json: |
+    {
+      "title": "Cluster ops",
+      "uid": "cluster-ops",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "10s",
+      "time": { "from": "now-30m", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Nodes Ready",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"true\"})", "refId": "A" }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Pods Running",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum(kube_pod_status_phase{phase=\"Running\"})", "refId": "A" }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Pod Restarts (1h)",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum(increase(kube_pod_container_status_restarts_total[1h]))", "refId": "A" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 5 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 4,
+          "title": "Pending / Failed / Unknown Pods",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum(kube_pod_status_phase{phase=~\"Pending|Failed|Unknown\"})", "refId": "A" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 5,
+          "title": "Node CPU Usage",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } },
+          "targets": [
+            {
+              "expr": "100 - (avg by (node) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+              "legendFormat": "{{node}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Node Memory Usage",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } },
+          "targets": [
+            {
+              "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+              "legendFormat": "{{node}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Node Disk Usage (/var)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } },
+          "targets": [
+            {
+              "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/var\"} / node_filesystem_size_bytes{mountpoint=\"/var\"})) * 100",
+              "legendFormat": "{{node}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "Pods by Phase",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "sum(kube_pod_status_phase) by (phase)",
+              "legendFormat": "{{phase}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "Container CPU Usage by Namespace",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace!=\"\",container!=\"\"}[5m])) by (namespace)",
+              "legendFormat": "{{namespace}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "Container Memory Usage by Namespace",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "bytes" } },
+          "targets": [
+            {
+              "expr": "sum(container_memory_working_set_bytes{namespace!=\"\",container!=\"\"}) by (namespace)",
+              "legendFormat": "{{namespace}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "Pod Restarts by Pod (15m increase)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "sum(increase(kube_pod_container_status_restarts_total[15m])) by (namespace, pod)",
+              "legendFormat": "{{namespace}}/{{pod}}",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+  postgres-ops.json: |
+    {
+      "title": "PostgreSQL Ops & Queries",
+      "uid": "postgres-ops",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "10s",
+      "time": { "from": "now-30m", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "PostgreSQL Up",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "pg_up", "refId": "A" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+              ]
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "Active Connections",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum(pg_stat_activity_count)", "refId": "A" }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Buffer Cache Hit Ratio",
+          "type": "gauge",
+          "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "unit": "percentunit", "min": 0, "max": 1 }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(pg_stat_database_blks_hit[5m])) / (sum(rate(pg_stat_database_blks_hit[5m])) + sum(rate(pg_stat_database_blks_read[5m])))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Deadlocks (1h)",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum(increase(pg_stat_database_deadlocks[1h]))", "refId": "A" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 5,
+          "title": "Transaction Rate (commit vs rollback)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            { "expr": "sum(rate(pg_stat_database_xact_commit[5m])) by (datname)", "legendFormat": "commit {{datname}}", "refId": "A" },
+            { "expr": "sum(rate(pg_stat_database_xact_rollback[5m])) by (datname)", "legendFormat": "rollback {{datname}}", "refId": "B" }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Tuple Write Rate",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            { "expr": "sum(rate(pg_stat_database_tup_inserted[5m])) by (datname)", "legendFormat": "inserted {{datname}}", "refId": "A" },
+            { "expr": "sum(rate(pg_stat_database_tup_updated[5m])) by (datname)", "legendFormat": "updated {{datname}}", "refId": "B" },
+            { "expr": "sum(rate(pg_stat_database_tup_deleted[5m])) by (datname)", "legendFormat": "deleted {{datname}}", "refId": "C" }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Buffer Cache I/O Rate (hit vs disk read)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            { "expr": "sum(rate(pg_stat_database_blks_hit[5m])) by (datname)", "legendFormat": "hit {{datname}}", "refId": "A" },
+            { "expr": "sum(rate(pg_stat_database_blks_read[5m])) by (datname)", "legendFormat": "disk read {{datname}}", "refId": "B" }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "Locks by Mode",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum(pg_locks_count) by (mode)", "legendFormat": "{{mode}}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "Connections by State",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "sum(pg_stat_activity_count) by (state)", "legendFormat": "{{state}}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "Checkpoint Rate (scheduled vs requested)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            { "expr": "rate(pg_stat_bgwriter_checkpoints_timed_total[5m])", "legendFormat": "scheduled", "refId": "A" },
+            { "expr": "rate(pg_stat_bgwriter_checkpoints_req_total[5m])", "legendFormat": "requested", "refId": "B" }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "Top Queries by Execution Rate",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            {
+              "expr": "topk(10, sum(rate(pg_stat_statements_calls_total[5m])) by (queryid, datname))",
+              "legendFormat": "{{queryid}} ({{datname}})",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "title": "Top Queries by Mean Latency",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "s" } },
+          "targets": [
+            {
+              "expr": "topk(10, sum(rate(pg_stat_statements_seconds_total[5m])) by (queryid) / sum(rate(pg_stat_statements_calls_total[5m])) by (queryid))",
+              "legendFormat": "{{queryid}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 13,
+          "title": "Query ID -> SQL Text",
+          "type": "table",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 36 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "pg_stat_statements_query_id",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+  jobs.json: |
+    {
+      "title": "Jobs",
+      "uid": "jobs",
+      "description": "Job queue health for job-manager-api: jobs per state, transitions, claims, queue wait and lease expirations. Metrics from service/JobMetrics.java.",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "10s",
+      "time": {
+        "from": "now-30m",
+        "to": "now"
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "service",
+            "label": "Service",
+            "type": "custom",
+            "query": "job-manager-api",
+            "multi": true,
+            "includeAll": true,
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [
+              {
+                "selected": true,
+                "text": "All",
+                "value": "$__all"
+              },
+              {
+                "selected": false,
+                "text": "job-manager-api",
+                "value": "job-manager-api"
+              }
+            ]
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Queued",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 0,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Jobs waiting for a worker (including ones whose run_after is in the future).",
+          "targets": [
+            {
+              "expr": "max(jobs{service_name=~\"$service\",state=\"QUEUED\"}) or vector(0)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Running",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 4,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Jobs leased to a worker.",
+          "targets": [
+            {
+              "expr": "max(jobs{service_name=~\"$service\",state=\"RUNNING\"}) or vector(0)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Succeeded",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 8,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "max(jobs{service_name=~\"$service\",state=\"SUCCEEDED\"}) or vector(0)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Failed",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "max(jobs{service_name=~\"$service\",state=\"FAILED\"}) or vector(0)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Cancelled",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 16,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "max(jobs{service_name=~\"$service\",state=\"CANCELLED\"}) or vector(0)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Queue Wait p95",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 20,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "From when a job became claimable (run_after) to when a worker claimed it, last 5 minutes.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(job_queue_wait_milliseconds_bucket{service_name=~\"$service\"}[5m])) by (le))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Jobs by State",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Refreshed from the database every app.jobs.stats-interval (15s) by every replica.",
+          "targets": [
+            {
+              "expr": "max(jobs{service_name=~\"$service\"}) by (state)",
+              "refId": "A",
+              "legendFormat": "{{state}}"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "State Transitions/s",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "NONE -> QUEUED is creation; RUNNING -> QUEUED is a retry (FailJob retryable, or an expired lease).",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(job_transitions_total{service_name=~\"$service\"}[5m])) by (from_state, to_state)",
+              "refId": "A",
+              "legendFormat": "{{from_state}} -> {{to_state}}"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "Claims/s (claimed vs empty)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 12
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "A high empty rate means workers poll faster than jobs arrive.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(job_claims_total{service_name=~\"$service\"}[5m])) by (outcome)",
+              "refId": "A",
+              "legendFormat": "{{outcome}}"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "Queue Wait (p50 / p95 / p99)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 12
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Growing wait with a growing Queued count means there are not enough workers.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(job_queue_wait_milliseconds_bucket{service_name=~\"$service\"}[5m])) by (le))",
+              "refId": "A",
+              "legendFormat": "p50"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(job_queue_wait_milliseconds_bucket{service_name=~\"$service\"}[5m])) by (le))",
+              "refId": "B",
+              "legendFormat": "p95"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(job_queue_wait_milliseconds_bucket{service_name=~\"$service\"}[5m])) by (le))",
+              "refId": "C",
+              "legendFormat": "p99"
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "Lease Expirations/s",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 20
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Workers that stopped heartbeating (crashed, or held a job longer than its lease); the reaper re-queued or failed the job.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(job_lease_expirations_total{service_name=~\"$service\"}[5m])) or vector(0)",
+              "refId": "A",
+              "legendFormat": "expired"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "title": "Failure Ratio (of finished jobs)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 20
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1
+            }
+          },
+          "targets": [
+            {
+              "expr": "(sum(rate(job_transitions_total{service_name=~\"$service\",to_state=\"FAILED\"}[5m])) or vector(0)) / sum(rate(job_transitions_total{service_name=~\"$service\",to_state=~\"SUCCEEDED|FAILED|CANCELLED\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "failed"
+            }
+          ]
+        },
+        {
+          "id": 13,
+          "title": "Worker RPC errors by code",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 28
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "LEASE_NOT_HELD: a worker called Heartbeat/CompleteJob/FailJob on a job it no longer holds (cancelled, or re-queued after its lease expired).",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_service=\"job.v1.WorkerService\"}[5m])) by (rpc_method, error_code)",
+              "refId": "A",
+              "legendFormat": "{{rpc_method}} {{error_code}}"
+            }
+          ]
+        }
+      ]
+    }
+  hazelcast-cache.json: |
+    {
+      "title": "Hazelcast Cache",
+      "uid": "hazelcast-cache",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "10s",
+      "time": { "from": "now-30m", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Cluster Size (members)",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "com_hazelcast_metrics_size{prefix=\"cluster\"}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Connected Clients",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "com_hazelcast_metrics_count{prefix=\"client.endpoint\"}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "\"jobs\" Map Cache Hit Ratio",
+          "type": "gauge",
+          "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "unit": "percentunit", "min": 0, "max": 1 }
+          },
+          "targets": [
+            {
+              "expr": "com_hazelcast_metrics_hits{tag0=~\".*name=jobs.*\"} / com_hazelcast_metrics_getcount{tag0=~\".*name=jobs.*\"}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "\"jobs\" Map Cached Entries",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "com_hazelcast_metrics_ownedentrycount{tag0=~\".*name=jobs.*\"}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "\"jobs\" Map Operation Rate",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            { "expr": "rate(com_hazelcast_metrics_hits{tag0=~\".*name=jobs.*\"}[5m])", "legendFormat": "hits", "refId": "A" },
+            { "expr": "rate(com_hazelcast_metrics_getcount{tag0=~\".*name=jobs.*\"}[5m])", "legendFormat": "gets", "refId": "B" },
+            { "expr": "rate(com_hazelcast_metrics_putcount{tag0=~\".*name=jobs.*\"}[5m])", "legendFormat": "puts", "refId": "C" },
+            { "expr": "rate(com_hazelcast_metrics_removecount{tag0=~\".*name=jobs.*\"}[5m])", "legendFormat": "removes", "refId": "D" }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "\"jobs\" Map Average Latency (get vs put)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ms" } },
+          "targets": [
+            {
+              "expr": "rate(com_hazelcast_metrics_totalgetlatency{tag0=~\".*name=jobs.*\"}[5m]) / rate(com_hazelcast_metrics_getcount{tag0=~\".*name=jobs.*\"}[5m])",
+              "legendFormat": "get",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(com_hazelcast_metrics_totalputlatency{tag0=~\".*name=jobs.*\"}[5m]) / rate(com_hazelcast_metrics_putcount{tag0=~\".*name=jobs.*\"}[5m])",
+              "legendFormat": "put",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Member Heap Memory",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "bytes" } },
+          "targets": [
+            { "expr": "com_hazelcast_metrics_usedheap{prefix=\"memory\"}", "legendFormat": "used", "refId": "A" },
+            { "expr": "com_hazelcast_metrics_committedheap{prefix=\"memory\"}", "legendFormat": "committed", "refId": "B" },
+            { "expr": "com_hazelcast_metrics_maxheap{prefix=\"memory\"}", "legendFormat": "max", "refId": "C" }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "GC Minor Collection Time (rate)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ms" } },
+          "targets": [
+            { "expr": "rate(com_hazelcast_metrics_minortime{prefix=\"gc\"}[5m])", "refId": "A" }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "TCP Connections",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "com_hazelcast_metrics_activecount{prefix=\"tcp.connection\"}", "legendFormat": "active", "refId": "A" },
+            { "expr": "com_hazelcast_metrics_clientcount{prefix=\"tcp.connection\"}", "legendFormat": "client", "refId": "B" }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "\"jobs\" Map Evictions & Expirations Rate",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "ops" } },
+          "targets": [
+            { "expr": "rate(com_hazelcast_metrics_evictioncount{tag0=~\".*name=jobs.*\"}[5m])", "legendFormat": "evictions", "refId": "A" },
+            { "expr": "rate(com_hazelcast_metrics_expirationcount{tag0=~\".*name=jobs.*\"}[5m])", "legendFormat": "expirations", "refId": "B" }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "\"jobs\" Map Owned Entry Memory Cost",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "bytes" } },
+          "targets": [
+            { "expr": "com_hazelcast_metrics_ownedentrymemorycost{tag0=~\".*name=jobs.*\"}", "refId": "A" }
+          ]
+        },
+        {
+          "id": 12,
+          "title": "\"jobs\" Map Backup Entry Count",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "com_hazelcast_metrics_backupentrycount{tag0=~\".*name=jobs.*\"}", "refId": "A" }
+          ]
+        }
+      ]
+    }
+  api-red.json: |
+    {
+      "title": "API RED & Saturation",
+      "uid": "api-red",
+      "description": "RED metrics (gRPC calls, non-OK statuses, latency) plus DB-pool and container saturation. The Service dropdown filters gRPC/DB series on service_name and container/pod series on the container name (which matches the service name).",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "10s",
+      "time": {
+        "from": "now-30m",
+        "to": "now"
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "service",
+            "label": "Service",
+            "type": "custom",
+            "query": "job-manager-api",
+            "multi": true,
+            "includeAll": true,
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [
+              {
+                "selected": true,
+                "text": "All",
+                "value": "$__all"
+              },
+              {
+                "selected": false,
+                "text": "job-manager-api",
+                "value": "job-manager-api"
+              }
+            ]
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Rate (RPS)",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 0,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\"}[5m]))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "p99 Latency",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 4,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(grpc_server_milliseconds_bucket{service_name=~\"$service\"}[5m])) by (le))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Error Ratio",
+          "type": "gauge",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 8,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.01
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.05
+                  }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "(sum(rate(grpc_errors_total{service_name=~\"$service\"}[5m])) or vector(0)) / sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\"}[5m]))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "DB Pool Busy Connections",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum(agroal_active_count{service_name=~\"$service\"})",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Request Rate by Method",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\"}[5m])) by (service_name, rpc_method)",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Latency Percentiles",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(grpc_server_milliseconds_bucket{service_name=~\"$service\"}[5m])) by (le))",
+              "legendFormat": "p50",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.90, sum(rate(grpc_server_milliseconds_bucket{service_name=~\"$service\"}[5m])) by (le))",
+              "legendFormat": "p90",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(grpc_server_milliseconds_bucket{service_name=~\"$service\"}[5m])) by (le))",
+              "legendFormat": "p95",
+              "refId": "C"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(grpc_server_milliseconds_bucket{service_name=~\"$service\"}[5m])) by (le))",
+              "legendFormat": "p99",
+              "refId": "D"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Error Rate by Method",
+          "description": "grpc_errors_total is only created on the first error, so this panel is empty (not zero) until a request returns an error status.",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 12
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\"}[5m])) by (service_name, rpc_method)",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "Request Rate vs Error Rate (overall)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 12
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\"}[5m]))",
+              "legendFormat": "requests",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\"}[5m])) or vector(0)",
+              "legendFormat": "errors",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "Latency by Method (p95)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 20
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(grpc_server_milliseconds_bucket{service_name=~\"$service\"}[5m])) by (le, service_name, rpc_method))",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "DB Connection Pool Utilization",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 20
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum(agroal_active_count{service_name=~\"$service\"}) by (service_name)",
+              "refId": "A",
+              "legendFormat": "busy {{service_name}}"
+            },
+            {
+              "expr": "sum(agroal_available_count{service_name=~\"$service\"}) by (service_name)",
+              "refId": "B",
+              "legendFormat": "idle {{service_name}}"
+            },
+            {
+              "expr": "sum(db_pool_max{service_name=~\"$service\"}) by (service_name)",
+              "refId": "C",
+              "legendFormat": "max (capacity) {{service_name}}"
+            },
+            {
+              "expr": "sum(agroal_awaiting_count{service_name=~\"$service\"}) by (service_name)",
+              "refId": "D",
+              "legendFormat": "pending {{service_name}}"
+            }
+          ],
+          "description": "Agroal per service; max is the configured capacity (db_pool_max). Pending (agroal_awaiting_count) > 0 means requests are waiting for a connection: the pool (10 per pod) is the bottleneck."
+        },
+        {
+          "id": 11,
+          "title": "DB Query Time (avg)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 28
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(jdbc_query_milliseconds_sum{service_name=~\"$service\"}[5m])) by (service_name) / sum(rate(jdbc_query_milliseconds_count{service_name=~\"$service\"}[5m])) by (service_name)",
+              "refId": "A",
+              "legendFormat": "query (avg) {{service_name}}"
+            },
+            {
+              "expr": "sum(rate(agroal_blocking_time_total_milliseconds{service_name=~\"$service\"}[5m])) by (service_name) / sum(rate(agroal_acquire_count_total{service_name=~\"$service\"}[5m])) by (service_name)",
+              "refId": "B",
+              "legendFormat": "connection acquire (avg) {{service_name}}"
+            }
+          ],
+          "description": "Per JDBC statement (the jdbc.query timer in repo/Db.java), and the time a request waits to get a pool connection (Agroal blocking time)."
+        },
+        {
+          "id": 12,
+          "title": "CPU Throttling Ratio",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 28
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_cfs_throttled_periods_total{container=~\"$service\"}[5m])) by (pod) / sum(rate(container_cpu_cfs_periods_total{container=~\"$service\"}[5m])) by (pod)",
+              "legendFormat": "{{pod}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 13,
+          "title": "Container Memory vs Limit",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 36
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(container_memory_working_set_bytes{container=~\"$service\"}) by (pod)",
+              "legendFormat": "{{pod}}",
+              "refId": "A"
+            },
+            {
+              "expr": "max(container_spec_memory_limit_bytes{container=~\"$service\"}) by (container)",
+              "legendFormat": "limit {{container}}",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "title": "Pod Health (restarts & readiness)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 36
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum(increase(kube_pod_container_status_restarts_total{container=~\"$service\"}[15m]))",
+              "legendFormat": "restarts (15m)",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(kube_pod_status_ready{condition=\"true\",namespace=\"default\",pod=~\"$service-.*\"})",
+              "legendFormat": "ready pods",
+              "refId": "B"
+            }
+          ]
+        }
+      ]
+    }
+  grpc-operations.json: |
+    {
+      "title": "gRPC Operations",
+      "uid": "grpc-operations",
+      "description": "Traffic and latency per gRPC service and method (e.g. job.v1.JobService / GetJob) - cardinality is bounded by the proto. grpc.health.v1 and reflection calls are excluded.",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "10s",
+      "time": {
+        "from": "now-30m",
+        "to": "now"
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "service",
+            "label": "Service",
+            "type": "custom",
+            "query": "job-manager-api",
+            "multi": true,
+            "includeAll": true,
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [
+              {
+                "selected": true,
+                "text": "All",
+                "value": "$__all"
+              },
+              {
+                "selected": false,
+                "text": "job-manager-api",
+                "value": "job-manager-api"
+              }
+            ]
+          },
+          {
+            "name": "rpc_service",
+            "label": "gRPC service",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "query": {
+              "query": "label_values(grpc_server_milliseconds_count{service_name=~\"$service\"}, rpc_service)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
+            },
+            "definition": "label_values(grpc_server_milliseconds_count{service_name=~\"$service\"}, rpc_service)",
+            "refresh": 2,
+            "sort": 1,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            }
+          },
+          {
+            "name": "rpc_method",
+            "label": "Method",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "query": {
+              "query": "label_values(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\"}, rpc_method)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
+            },
+            "definition": "label_values(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\"}, rpc_method)",
+            "refresh": 2,
+            "sort": 1,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            }
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Requests/s",
+          "description": "Total request rate for the selected services, methods and routes.",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 0,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m]))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Write Share",
+          "description": "Share of calls that change a job (CreateJob, CancelJob, DeleteJob, ClaimJob, Heartbeat, CompleteJob, FailJob).",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 4,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\",rpc_method=~\"(Create|Cancel|Delete|Claim|Complete|Fail)Job|Heartbeat\"}[5m])) / sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m]))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "p95 Latency",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 8,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(grpc_server_milliseconds_bucket{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m])) by (le))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "p99 Latency",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(grpc_server_milliseconds_bucket{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m])) by (le))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Error Ratio",
+          "description": "Non-OK calls / calls. Includes client-caused errors (NOT_FOUND, BAD_USER_INPUT, CONFLICT); see the gRPC Errors dashboard for the breakdown by code.",
+          "type": "gauge",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 16,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.01
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.05
+                  }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "(sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m])) or vector(0)) / sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m]))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Active Methods",
+          "description": "Number of distinct RPC methods that received traffic in the last 5 minutes.",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 20,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "count(sum by (rpc_method) (rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m])) > 0) or vector(0)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Request Rate by Method",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m])) by (service_name, rpc_method)",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "Request Rate by Service",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m])) by (service_name, rpc_service)",
+              "refId": "A",
+              "legendFormat": "{{service_name}} / {{rpc_service}}"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "p95 Latency by Method",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 12
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(grpc_server_milliseconds_bucket{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m])) by (le, service_name, rpc_method))",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "Average Latency by Method",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 12
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_sum{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m])) by (service_name, rpc_method) / sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[5m])) by (service_name, rpc_method)",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "Latency Distribution",
+          "description": "Where call durations land across the histogram buckets (5 ms to 5 s) for the current selection. A second hump usually means a slow path (cache miss, N+1) mixed into fast traffic.",
+          "type": "heatmap",
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 20
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "calculate": false,
+            "yAxis": {
+              "unit": "ms"
+            },
+            "cellGap": 1,
+            "color": {
+              "scheme": "Spectral",
+              "mode": "scheme"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(increase(grpc_server_milliseconds_bucket{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[$__rate_interval])) by (le)",
+              "legendFormat": "{{le}}",
+              "format": "heatmap",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "title": "Method Summary (current window)",
+          "description": "One row per (service, method) over the selected time range: call rate, p95 latency and error ratio.",
+          "type": "table",
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 29
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "req/s"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "reqps"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p95 (ms)"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "ms"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "error ratio"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percentunit"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "rpc_method",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Time 1": true,
+                  "Time 2": true,
+                  "Time 3": true,
+                  "service_name 1": true,
+                  "service_name 2": true
+                },
+                "renameByName": {
+                  "Value #A": "req/s",
+                  "Value #B": "p95 (ms)",
+                  "Value #C": "error ratio",
+                  "service_name 3": "service",
+                  "service_name": "service",
+                  "rpc_method": "method"
+                }
+              }
+            },
+            {
+              "id": "sortBy",
+              "options": {
+                "fields": {},
+                "sort": [
+                  {
+                    "field": "req/s",
+                    "desc": true
+                  }
+                ]
+              }
+            }
+          ],
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[$__range])) by (service_name, rpc_method)",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(grpc_server_milliseconds_bucket{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[$__range])) by (le, service_name, rpc_method))",
+              "format": "table",
+              "instant": true,
+              "refId": "B"
+            },
+            {
+              "expr": "(sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[$__range])) by (service_name, rpc_method) or (sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[$__range])) by (service_name, rpc_method) * 0)) / sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_service=~\"$rpc_service\",rpc_method=~\"$rpc_method\"}[$__range])) by (service_name, rpc_method)",
+              "format": "table",
+              "instant": true,
+              "refId": "C"
+            }
+          ]
+        }
+      ]
+    }
+  grpc-errors.json: |
+    {
+      "title": "gRPC Errors",
+      "uid": "grpc-errors",
+      "description": "Non-OK calls broken down by the google.rpc.ErrorInfo reason (BAD_USER_INPUT, NOT_FOUND, CONFLICT, INTERNAL_SERVER_ERROR - or the bare gRPC code for statuses the service did not produce, e.g. RESOURCE_EXHAUSTED) and by the method that failed. Panels are empty, not zero, until an error has occurred: the counter is only created on the first error.",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "10s",
+      "time": {
+        "from": "now-30m",
+        "to": "now"
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "service",
+            "label": "Service",
+            "type": "custom",
+            "query": "job-manager-api",
+            "multi": true,
+            "includeAll": true,
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "options": [
+              {
+                "selected": true,
+                "text": "All",
+                "value": "$__all"
+              },
+              {
+                "selected": false,
+                "text": "job-manager-api",
+                "value": "job-manager-api"
+              }
+            ]
+          },
+          {
+            "name": "rpc_method",
+            "label": "Method",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "query": {
+              "query": "label_values(grpc_server_milliseconds_count{service_name=~\"$service\"}, rpc_method)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
+            },
+            "definition": "label_values(grpc_server_milliseconds_count{service_name=~\"$service\"}, rpc_method)",
+            "refresh": 2,
+            "sort": 1,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            }
+          },
+          {
+            "name": "error_code",
+            "label": "Error code",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "query": {
+              "query": "label_values(grpc_errors_total{service_name=~\"$service\"}, error_code)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
+            },
+            "definition": "label_values(grpc_errors_total{service_name=~\"$service\"}, error_code)",
+            "refresh": 2,
+            "sort": 1,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            }
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Error Ratio",
+          "description": "Errors / calls for the selected codes. Client-caused codes (NOT_FOUND, CONFLICT, BAD_USER_INPUT) count too; watch 'Server Errors/s' for genuine faults.",
+          "type": "gauge",
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 0,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.01
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.05
+                  }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "(sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=~\"$error_code\"}[5m])) or vector(0)) / sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_method=~\"$rpc_method\"}[5m]))",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Errors/s",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 6,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=~\"$error_code\"}[5m])) or vector(0)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Server Errors/s",
+          "description": "INTERNAL_SERVER_ERROR (unhandled exceptions, gRPC INTERNAL) plus statuses the service never sends on purpose (UNKNOWN, UNAVAILABLE, DEADLINE_EXCEEDED, DATA_LOSS): bugs or dependency failures rather than bad requests. Should stay at 0.",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 12,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.001
+                  }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=~\"INTERNAL_SERVER_ERROR|UNKNOWN|INTERNAL|UNAVAILABLE|DEADLINE_EXCEEDED|DATA_LOSS\"}[5m])) or vector(0)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Conflicts/s",
+          "description": "CONFLICT: CancelJob with a stale version (ABORTED), and cancelling/deleting a job whose state does not allow it (FAILED_PRECONDITION). Workers that lost their lease show up as LEASE_NOT_HELD instead (see the Jobs dashboard).",
+          "type": "stat",
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 18,
+            "y": 0
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=\"CONFLICT\"}[5m])) or vector(0)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Errors by Code",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "noValue": "No errors",
+              "custom": {
+                "fillOpacity": 30,
+                "stacking": {
+                  "mode": "normal"
+                }
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=~\"$error_code\"}[5m])) by (error_code)",
+              "legendFormat": "{{error_code}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Error Ratio by Method",
+          "description": "Only methods that have errored appear.",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "noValue": "No errors"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=~\"$error_code\"}[5m])) by (service_name, rpc_method) / sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_method=~\"$rpc_method\"}[5m])) by (service_name, rpc_method)",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Errors by Method and Code",
+          "description": "Errors per RPC method and ErrorInfo reason.",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 12
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "noValue": "No errors"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=~\"$error_code\"}[5m])) by (service_name, rpc_method, error_code)",
+              "legendFormat": "{{service_name}} / {{rpc_method}} / {{error_code}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "Conflict Ratio by Method",
+          "description": "Share of each method's calls that ended in CONFLICT.",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 12
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "noValue": "No errors"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=\"CONFLICT\"}[5m])) by (service_name, rpc_method) / sum(rate(grpc_server_milliseconds_count{service_name=~\"$service\",rpc_method=~\"$rpc_method\"}[5m])) by (service_name, rpc_method)",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "Client Input Errors (validation, oversized)",
+          "description": "Calls rejected because of what the client sent: INVALID_ARGUMENT with field violations (BAD_USER_INPUT), and requests over the 64 KiB inbound limit (RESOURCE_EXHAUSTED, rejected by gRPC before the service runs).",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 20
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "noValue": "No errors"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=~\"BAD_USER_INPUT|RESOURCE_EXHAUSTED\"}[5m])) by (service_name, error_code)",
+              "legendFormat": "{{service_name}} / {{error_code}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "NOT_FOUND by Method",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 20
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "noValue": "No errors"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=\"NOT_FOUND\"}[5m])) by (service_name, rpc_method)",
+              "legendFormat": "{{service_name}} / {{rpc_method}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "Error Totals (current window)",
+          "description": "Error counts per (service, method, code) over the selected time range.",
+          "type": "table",
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 28
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "errors"
+                },
+                "properties": [
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "renameByName": {
+                  "Value": "errors",
+                  "service_name": "service",
+                  "rpc_method": "method",
+                  "error_code": "code"
+                }
+              }
+            },
+            {
+              "id": "sortBy",
+              "options": {
+                "fields": {},
+                "sort": [
+                  {
+                    "field": "errors",
+                    "desc": true
+                  }
+                ]
+              }
+            }
+          ],
+          "targets": [
+            {
+              "expr": "sum(increase(grpc_errors_total{service_name=~\"$service\",rpc_method=~\"$rpc_method\",error_code=~\"$error_code\"}[$__range])) by (service_name, rpc_method, error_code)",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+  trivy-security.json: |
+    {
+      "title": "Trivy Security",
+      "uid": "trivy-security",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "1m",
+      "time": {"from": "now-24h", "to": "now"},
+      "description": "Trivy Operator scan results (k8s/argocd/trivy-operator-application.yaml, TRIVY.md). Counts, not CVE IDs - the per-CVE metric is off for cardinality; drill into the reports with kubectl.",
+      "templating": { "list": [
+        {
+          "name": "namespace",
+          "label": "Namespace",
+          "type": "query",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "definition": "label_values(trivy_image_vulnerabilities, namespace)",
+          "query": {"query": "label_values(trivy_image_vulnerabilities, namespace)", "refId": "PrometheusVariableQueryEditor-VariableQuery"},
+          "refresh": 2,
+          "multi": true,
+          "includeAll": true,
+          "allValue": ".*",
+          "sort": 1,
+          "current": {"selected": true, "text": ["All"], "value": ["$__all"]}
+        },
+        {
+          "name": "severity",
+          "label": "Severity",
+          "type": "custom",
+          "query": "Critical,High,Medium,Low,Unknown",
+          "multi": true,
+          "includeAll": true,
+          "allValue": ".*",
+          "current": {"selected": true, "text": ["All"], "value": ["$__all"]},
+          "options": [{"selected": true, "text": "All", "value": "$__all"}, {"selected": false, "text": "Critical", "value": "Critical"}, {"selected": false, "text": "High", "value": "High"}, {"selected": false, "text": "Medium", "value": "Medium"}, {"selected": false, "text": "Low", "value": "Low"}, {"selected": false, "text": "Unknown", "value": "Unknown"}]
+        }
+      ] },
+      "panels": [
+        {
+          "title": "Critical vulnerabilities",
+          "description": "Critical-severity CVEs across the selected namespaces. Counted per scanned workload container, so an image running in two workloads counts twice (the table below dedupes by image).",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+          "targets": [{"expr": "sum(trivy_image_vulnerabilities{namespace=~\"$namespace\",severity=\"Critical\"})", "refId": "A", "instant": true}],
+          "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"]}},
+          "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "noValue": "0", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "dark-red", "value": 1}]}}},
+          "id": 1,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "High vulnerabilities",
+          "description": "High-severity CVEs across the selected namespaces. Counted per scanned workload container, so an image running in two workloads counts twice (the table below dedupes by image).",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+          "targets": [{"expr": "sum(trivy_image_vulnerabilities{namespace=~\"$namespace\",severity=\"High\"})", "refId": "A", "instant": true}],
+          "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"]}},
+          "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "noValue": "0", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}},
+          "id": 2,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "Medium vulnerabilities",
+          "description": "Medium-severity CVEs across the selected namespaces. Counted per scanned workload container, so an image running in two workloads counts twice (the table below dedupes by image).",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+          "targets": [{"expr": "sum(trivy_image_vulnerabilities{namespace=~\"$namespace\",severity=\"Medium\"})", "refId": "A", "instant": true}],
+          "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"]}},
+          "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "noValue": "0", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 1}]}}},
+          "id": 3,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "Low vulnerabilities",
+          "description": "Low-severity CVEs across the selected namespaces. Counted per scanned workload container, so an image running in two workloads counts twice (the table below dedupes by image).",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
+          "targets": [{"expr": "sum(trivy_image_vulnerabilities{namespace=~\"$namespace\",severity=\"Low\"})", "refId": "A", "instant": true}],
+          "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"]}},
+          "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "noValue": "0", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}]}}},
+          "id": 4,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "Exposed secrets",
+          "description": "Secrets (keys, tokens, passwords) Trivy found baked into image layers, any severity.",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
+          "targets": [{"expr": "sum(trivy_image_exposedsecrets{namespace=~\"$namespace\"})", "refId": "A", "instant": true}],
+          "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"]}},
+          "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "noValue": "0", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "dark-red", "value": 1}]}}},
+          "id": 5,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "Failed config checks (Crit+High)",
+          "description": "Critical/High misconfigurations (ConfigAuditReports) on workloads, Services, Ingresses etc. in the selected namespaces.",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0},
+          "targets": [{"expr": "sum(trivy_resource_configaudits{namespace=~\"$namespace\",severity=~\"Critical|High\"})", "refId": "A", "instant": true}],
+          "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"]}},
+          "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "noValue": "0", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}},
+          "id": 6,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "Vulnerabilities by namespace",
+          "description": "CVE count per namespace, stacked by severity (filtered by $severity).",
+          "type": "barchart",
+          "gridPos": {"h": 9, "w": 12, "x": 0, "y": 4},
+          "targets": [{"expr": "sum by (namespace, severity) (trivy_image_vulnerabilities{namespace=~\"$namespace\",severity=~\"$severity\"})", "format": "table", "instant": true, "refId": "A"}],
+          "transformations": [{"id": "groupingToMatrix", "options": {"columnField": "severity", "rowField": "namespace", "valueField": "Value"}}, {"id": "organize", "options": {"indexByName": {"namespace\\severity": 0, "Critical": 1, "High": 2, "Medium": 3, "Low": 4, "Unknown": 5}, "renameByName": {"namespace\\severity": "namespace"}}}],
+          "options": {"stacking": "normal", "orientation": "horizontal", "xField": "namespace", "barWidth": 0.6, "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}, "showValue": "never"},
+          "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "fillOpacity": 90, "lineWidth": 0}, "overrides": [{"matcher": {"id": "byName", "options": "Critical"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "dark-red"}}]}, {"matcher": {"id": "byName", "options": "High"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]}, {"matcher": {"id": "byName", "options": "Medium"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "orange"}}]}, {"matcher": {"id": "byName", "options": "Low"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "yellow"}}]}, {"matcher": {"id": "byName", "options": "Unknown"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "gray"}}]}]},
+          "id": 7,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "Vulnerabilities over time",
+          "description": "Total CVEs by severity. Steps when a scan finishes: a new image tag, the 24h report TTL re-scan, or a vulnerability DB update.",
+          "type": "timeseries",
+          "gridPos": {"h": 9, "w": 12, "x": 12, "y": 4},
+          "targets": [{"expr": "sum by (severity) (trivy_image_vulnerabilities{namespace=~\"$namespace\",severity=~\"$severity\"})", "legendFormat": "{{severity}}", "refId": "A"}],
+          "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+          "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "custom": {"lineWidth": 2, "fillOpacity": 0, "spanNulls": true}}, "overrides": [{"matcher": {"id": "byName", "options": "Critical"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "dark-red"}}]}, {"matcher": {"id": "byName", "options": "High"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]}, {"matcher": {"id": "byName", "options": "Medium"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "orange"}}]}, {"matcher": {"id": "byName", "options": "Low"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "yellow"}}]}, {"matcher": {"id": "byName", "options": "Unknown"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "gray"}}]}]},
+          "id": 8,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "Most vulnerable images",
+          "description": "One row per image (registry/repository:tag) with CVE counts by severity. max, not sum: the same image in several workloads has the same findings. Details: kubectl get vulnerabilityreports -A -o wide, then describe the one for the workload.",
+          "type": "table",
+          "gridPos": {"h": 10, "w": 24, "x": 0, "y": 13},
+          "targets": [{"expr": "max by (image_registry, image_repository, image_tag) (trivy_image_vulnerabilities{namespace=~\"$namespace\",severity=\"Critical\"})", "format": "table", "instant": true, "refId": "A"}, {"expr": "max by (image_registry, image_repository, image_tag) (trivy_image_vulnerabilities{namespace=~\"$namespace\",severity=\"High\"})", "format": "table", "instant": true, "refId": "B"}, {"expr": "max by (image_registry, image_repository, image_tag) (trivy_image_vulnerabilities{namespace=~\"$namespace\",severity=\"Medium\"})", "format": "table", "instant": true, "refId": "C"}, {"expr": "max by (image_registry, image_repository, image_tag) (trivy_image_vulnerabilities{namespace=~\"$namespace\",severity=\"Low\"})", "format": "table", "instant": true, "refId": "D"}, {"expr": "count by (image_registry, image_repository, image_tag) (count by (image_registry, image_repository, image_tag, namespace, resource_name) (trivy_image_vulnerabilities{namespace=~\"$namespace\"}))", "format": "table", "instant": true, "refId": "E"}],
+          "transformations": [{"id": "merge", "options": {}}, {"id": "organize", "options": {"excludeByName": {"Time": true, "Time 1": true, "Time 2": true, "Time 3": true, "Time 4": true, "Time 5": true, "Time 6": true}, "renameByName": {"Value #A": "Critical", "Value #B": "High", "Value #C": "Medium", "Value #D": "Low", "Value #E": "workloads"}, "indexByName": {"image_registry": 0, "image_repository": 1, "image_tag": 2, "workloads": 8, "Critical": 4, "High": 5, "Medium": 6, "Low": 7}}}, {"id": "filterByValue", "options": {"type": "exclude", "match": "all", "filters": [{"fieldName": "Critical", "config": {"id": "lowerOrEqual", "options": {"value": 0}}}, {"fieldName": "High", "config": {"id": "lowerOrEqual", "options": {"value": 0}}}, {"fieldName": "Medium", "config": {"id": "lowerOrEqual", "options": {"value": 0}}}, {"fieldName": "Low", "config": {"id": "lowerOrEqual", "options": {"value": 0}}}]}}, {"id": "sortBy", "options": {"sort": [{"field": "Critical", "desc": true}, {"field": "High", "desc": true}]}}],
+          "options": {"showHeader": true, "cellHeight": "sm", "footer": {"show": false}},
+          "fieldConfig": {"defaults": {"decimals": 0, "custom": {"filterable": true}}, "overrides": [{"matcher": {"id": "byName", "options": "Critical"}, "properties": [{"id": "custom.width", "value": 90}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}, {"id": "color", "value": {"mode": "thresholds"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "dark-red", "value": 1}]}}]}, {"matcher": {"id": "byName", "options": "High"}, "properties": [{"id": "custom.width", "value": 90}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}, {"id": "color", "value": {"mode": "thresholds"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "red", "value": 1}]}}]}, {"matcher": {"id": "byName", "options": "Medium"}, "properties": [{"id": "custom.width", "value": 90}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}, {"id": "color", "value": {"mode": "thresholds"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "orange", "value": 1}]}}]}, {"matcher": {"id": "byName", "options": "Low"}, "properties": [{"id": "custom.width", "value": 90}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}, {"id": "color", "value": {"mode": "thresholds"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "yellow", "value": 1}]}}]}]},
+          "id": 9,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "Misconfigurations by resource",
+          "description": "Failed config-audit checks (ConfigAuditReports) per resource. Details: kubectl get configauditreports -n <namespace> -o wide.",
+          "type": "table",
+          "gridPos": {"h": 9, "w": 24, "x": 0, "y": 23},
+          "targets": [{"expr": "sum by (namespace, resource_kind, resource_name) (trivy_resource_configaudits{namespace=~\"$namespace\",severity=\"Critical\"})", "format": "table", "instant": true, "refId": "A"}, {"expr": "sum by (namespace, resource_kind, resource_name) (trivy_resource_configaudits{namespace=~\"$namespace\",severity=\"High\"})", "format": "table", "instant": true, "refId": "B"}, {"expr": "sum by (namespace, resource_kind, resource_name) (trivy_resource_configaudits{namespace=~\"$namespace\",severity=\"Medium\"})", "format": "table", "instant": true, "refId": "C"}, {"expr": "sum by (namespace, resource_kind, resource_name) (trivy_resource_configaudits{namespace=~\"$namespace\",severity=\"Low\"})", "format": "table", "instant": true, "refId": "D"}],
+          "transformations": [{"id": "merge", "options": {}}, {"id": "organize", "options": {"excludeByName": {"Time": true, "Time 1": true, "Time 2": true, "Time 3": true, "Time 4": true, "Time 5": true, "Time 6": true}, "renameByName": {"Value #A": "Critical", "Value #B": "High", "Value #C": "Medium", "Value #D": "Low"}, "indexByName": {"namespace": 0, "resource_kind": 1, "resource_name": 2, "Critical": 3, "High": 4, "Medium": 5, "Low": 6}}}, {"id": "filterByValue", "options": {"type": "exclude", "match": "all", "filters": [{"fieldName": "Critical", "config": {"id": "lowerOrEqual", "options": {"value": 0}}}, {"fieldName": "High", "config": {"id": "lowerOrEqual", "options": {"value": 0}}}, {"fieldName": "Medium", "config": {"id": "lowerOrEqual", "options": {"value": 0}}}, {"fieldName": "Low", "config": {"id": "lowerOrEqual", "options": {"value": 0}}}]}}, {"id": "sortBy", "options": {"sort": [{"field": "Critical", "desc": true}, {"field": "High", "desc": true}]}}],
+          "options": {"showHeader": true, "cellHeight": "sm", "footer": {"show": false}},
+          "fieldConfig": {"defaults": {"decimals": 0, "custom": {"filterable": true}}, "overrides": [{"matcher": {"id": "byName", "options": "Critical"}, "properties": [{"id": "custom.width", "value": 90}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}, {"id": "color", "value": {"mode": "thresholds"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "dark-red", "value": 1}]}}]}, {"matcher": {"id": "byName", "options": "High"}, "properties": [{"id": "custom.width", "value": 90}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}, {"id": "color", "value": {"mode": "thresholds"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "red", "value": 1}]}}]}, {"matcher": {"id": "byName", "options": "Medium"}, "properties": [{"id": "custom.width", "value": 90}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}, {"id": "color", "value": {"mode": "thresholds"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "orange", "value": 1}]}}]}, {"matcher": {"id": "byName", "options": "Low"}, "properties": [{"id": "custom.width", "value": 90}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}, {"id": "color", "value": {"mode": "thresholds"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "text", "value": null}, {"color": "yellow", "value": 1}]}}]}]},
+          "id": 10,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "RBAC findings by severity",
+          "description": "Failed RBAC assessment checks on Roles (namespaced, filtered by $namespace) and ClusterRoles (cluster-wide, not filtered). The metrics only carry the report name (role-<name>, or role-<hash> when too long); see TRIVY.md for the kubectl command that maps reports to roles.",
+          "type": "barchart",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+          "targets": [{"expr": "sum by (severity) (trivy_role_rbacassessments{namespace=~\"$namespace\",severity=~\"$severity\"})", "format": "table", "instant": true, "refId": "A"}, {"expr": "sum by (severity) (trivy_clusterrole_clusterrbacassessments{severity=~\"$severity\"})", "format": "table", "instant": true, "refId": "B"}],
+          "transformations": [{"id": "joinByField", "options": {"byField": "severity", "mode": "outer"}}, {"id": "organize", "options": {"excludeByName": {"Time 1": true, "Time 2": true}, "renameByName": {"Value #A": "Roles", "Value #B": "ClusterRoles"}}}],
+          "options": {"orientation": "horizontal", "xField": "severity", "stacking": "none", "barWidth": 0.7, "groupWidth": 0.8, "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi"}, "showValue": "auto"},
+          "fieldConfig": {"defaults": {"unit": "none", "decimals": 0, "fillOpacity": 90, "lineWidth": 0}, "overrides": [{"matcher": {"id": "byName", "options": "Roles"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "blue"}}]}, {"matcher": {"id": "byName", "options": "ClusterRoles"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "purple"}}]}]},
+          "id": 11,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "title": "Cluster compliance",
+          "description": "Controls passing/failing per compliance spec (ClusterComplianceReports, regenerated every 6h - compliance.cron). Details: kubectl get clustercompliancereport <name> -o yaml.",
+          "type": "table",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+          "targets": [{"expr": "sum by (title, status) (trivy_cluster_compliance)", "format": "table", "instant": true, "refId": "A"}],
+          "transformations": [{"id": "groupingToMatrix", "options": {"columnField": "status", "rowField": "title", "valueField": "Value"}}, {"id": "organize", "options": {"renameByName": {"title\\status": "spec"}, "indexByName": {"title\\status": 0, "Pass": 1, "Fail": 2}}}],
+          "options": {"showHeader": true, "cellHeight": "sm"},
+          "fieldConfig": {"defaults": {"decimals": 0}, "overrides": [{"matcher": {"id": "byName", "options": "Fail"}, "properties": [{"id": "custom.cellOptions", "value": {"type": "color-text"}}, {"id": "color", "value": {"mode": "thresholds"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}]}, {"matcher": {"id": "byName", "options": "Pass"}, "properties": [{"id": "custom.cellOptions", "value": {"type": "color-text"}}, {"id": "color", "value": {"mode": "fixed", "fixedColor": "green"}}]}]},
+          "id": 12,
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    }

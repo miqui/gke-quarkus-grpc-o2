@@ -1,0 +1,45 @@
+# Pod Security Standards "restricted" subset. Each container (init containers included) must run
+# as non-root, forbid privilege escalation, drop ALL capabilities and use a seccomp profile.
+# Pod-level securityContext values count as the default for containers that don't override them.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-secure-container-context
+  annotations:
+    policies.kyverno.io/title: Require a secure container securityContext
+    policies.kyverno.io/category: Pod Security Standards (Restricted)
+    policies.kyverno.io/severity: high
+spec:
+  validationActions: [Audit]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  autogen:
+    podControllers:
+      controllers: ["deployments", "statefulsets", "daemonsets"]
+  variables:
+    - name: containers
+      expression: "object.spec.containers + object.spec.?initContainers.orValue([])"
+  validations:
+    # Note for the securityContext work: runAsNonRoot is only verifiable by the kubelet when the
+    # image's USER is numeric (or runAsUser is set), so images whose USER is a name (not a uid) need runAsUser.
+    - expression: >-
+        variables.containers.all(c,
+          c.?securityContext.?runAsNonRoot.orValue(
+            object.spec.?securityContext.?runAsNonRoot.orValue(false)))
+      message: "Containers must set runAsNonRoot: true (container or pod securityContext)."
+    - expression: "variables.containers.all(c, c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false)"
+      message: "Containers must set allowPrivilegeEscalation: false."
+    - expression: >-
+        variables.containers.all(c,
+          'ALL' in c.?securityContext.?capabilities.?drop.orValue([]))
+      message: "Containers must drop ALL capabilities."
+    - expression: >-
+        variables.containers.all(c,
+          c.?securityContext.?seccompProfile.?type.orValue(
+            object.spec.?securityContext.?seccompProfile.?type.orValue(''))
+          in ['RuntimeDefault', 'Localhost'])
+      message: "Containers must use a RuntimeDefault or Localhost seccomp profile."

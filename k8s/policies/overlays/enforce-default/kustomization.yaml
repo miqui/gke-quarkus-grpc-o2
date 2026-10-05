@@ -1,0 +1,23 @@
+# The shared rules in ../../rules, denying violations in the `default` namespace (job-manager-api,
+# postgres, hazelcast - everything Argo CD syncs from k8s/). Policy names get an
+# `-enforce` suffix so the audit copy of the same rule can coexist.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../rules
+nameSuffix: -enforce
+patches:
+  - target:
+      group: policies.kyverno.io
+      kind: ValidatingPolicy
+    patch: |-
+      - op: replace
+        path: /spec/validationActions
+        value: [Deny]
+      - op: add
+        path: /spec/matchConstraints/namespaceSelector
+        value:
+          matchExpressions:
+            - key: kubernetes.io/metadata.name
+              operator: In
+              values: ["default"]

@@ -1,0 +1,114 @@
+# Values for the `argo/argo-cd` chart 10.9.2 (Argo CD v3.5.3).
+#
+# Used twice, with the same release name and version, so the two never disagree:
+#   1. gke-bootstrap.sh's one-off `helm upgrade --install argocd argo/argo-cd` (Argo can't install
+#      itself before it exists);
+#   2. apps/argocd.yaml, after which Argo CD manages its own release like any other chart -
+#      version bumps and value changes are merged commits from then on.
+#
+# Access is port-forward only (gke-port-forward.sh -> https://localhost:8081); nothing here
+# creates an Ingress, LoadBalancer or Gateway route.
+
+global:
+  # One NetworkPolicy per component, allowing only the flows Argo CD itself needs.
+  networkPolicy:
+    create: true
+
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+configs:
+  params:
+    # Fail a sync that would take longer than this instead of hanging on it.
+    controller.sync.timeout.seconds: "1800"
+    # Diff through a server-side-apply dry run instead of client-side. Most charts here sync with
+    # ServerSideApply=true, and the client-side diff misreads the large CRDs they ship (Kyverno,
+    # External Secrets): they showed permanently OutOfSync while a server-side diff was empty.
+    controller.diff.server.side: "true"
+
+  cm:
+    # Crossplane's recommendation: the per-MR ProviderConfigUsage objects churn constantly and
+    # carry no state worth showing or diffing.
+    resource.exclusions: |
+      - apiGroups:
+          - "*"
+        kinds:
+          - ProviderConfigUsage
+
+    # App-of-apps ordering: without this, a parent treats a child Application as healthy the
+    # moment it exists, so sync waves in k8s/argocd/apps/ wouldn't wait for (say) the Crossplane
+    # chart to be up before applying its Providers. Argo CD removed this built-in in 1.8.
+    resource.customizations.health.argoproj.io_Application: |
+      hs = {}
+      hs.status = "Progressing"
+      hs.message = ""
+      if obj.status ~= nil and obj.status.health ~= nil then
+        hs.status = obj.status.health.status
+        if obj.status.health.message ~= nil then
+          hs.message = obj.status.health.message
+        end
+      end
+      return hs
+
+    # Crossplane packages (pkg.crossplane.io), managed resources (*.upbound.io) and this repo's
+    # PostgresInstance XR report
+    # readiness through Ready/Synced conditions, which Argo CD doesn't read by default - without
+    # this they show Healthy while Cloud SQL is still provisioning. Wildcards only work in this
+    # combined `resource.customizations` key (not the per-kind ones above). Adapted from the
+    # Crossplane docs' Argo CD guide.
+    resource.customizations: |
+      "*.crossplane.io/*":
+        health.lua: |
+          -- Packages and XRDs report status; Compositions, DeploymentRuntimeConfigs and the
+          -- like never do and are healthy as soon as they exist.
+          hs = { status = "Progressing", message = "Waiting for Ready" }
+          reports = { Provider = true, Function = true, Configuration = true, CompositeResourceDefinition = true }
+          if obj.status == nil or obj.status.conditions == nil then
+            if not reports[obj.kind] then hs.status = "Healthy"; hs.message = "" end
+            return hs
+          end
+          for _, c in ipairs(obj.status.conditions) do
+            if (c.type == "Synced" or c.type == "Healthy") and c.status == "False" then
+              hs.status = "Degraded"; hs.message = c.message or c.reason; return hs
+            end
+          end
+          for _, c in ipairs(obj.status.conditions) do
+            if c.type == "Ready" or c.type == "Healthy" or c.type == "Established" then
+              if c.status == "True" then hs.status = "Healthy"; hs.message = "" end
+            end
+          end
+          return hs
+      "*.upbound.io/*":
+        health.lua: |
+          hs = { status = "Progressing", message = "Waiting for Ready" }
+          if obj.status == nil or obj.status.conditions == nil then
+            if obj.kind == "ClusterProviderConfig" or obj.kind == "ProviderConfig" then
+              hs.status = "Healthy"; hs.message = ""
+            end
+            return hs
+          end
+          for _, c in ipairs(obj.status.conditions) do
+            if (c.type == "Synced" or c.type == "LastAsyncOperation") and c.status == "False" then
+              hs.status = "Degraded"; hs.message = c.message or c.reason; return hs
+            end
+          end
+          for _, c in ipairs(obj.status.conditions) do
+            if c.type == "Ready" and c.status == "True" then hs.status = "Healthy"; hs.message = "" end
+          end
+          return hs
+      "platform.miqui.dev/*":
+        health.lua: |
+          hs = { status = "Progressing", message = "Waiting for Ready" }
+          if obj.status == nil or obj.status.conditions == nil then return hs end
+          for _, c in ipairs(obj.status.conditions) do
+            if c.type == "Synced" and c.status == "False" then
+              hs.status = "Degraded"; hs.message = c.message or c.reason; return hs
+            end
+          end
+          for _, c in ipairs(obj.status.conditions) do
+            if c.type == "Ready" and c.status == "True" then hs.status = "Healthy"; hs.message = "" end
+          end
+          return hs

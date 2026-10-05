@@ -1,0 +1,33 @@
+# k8s/platform/: the Secret Manager ClusterSecretStore, Crossplane's GCP Cloud SQL provider +
+# functions + credentials config, and the PostgresInstance API. Needs the CRDs from the
+# external-secrets and crossplane Applications (previous wave); inside, its own sync waves put
+# the Crossplane packages before the objects whose CRDs they install.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+    targetRevision: main
+    path: k8s/platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+    # The ClusterProviderConfig/XRD can race the provider's CRD installation on a first sync.
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 3m

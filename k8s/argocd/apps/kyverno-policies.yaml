@@ -1,0 +1,30 @@
+# ArgoCD Application syncing k8s/policies/ - the Kyverno policies and PolicyExceptions (see the
+# kustomization there for the layout). Kyverno itself is the kyverno Application (previous wave);
+# this only owns the policy resources, and syncs before the workload Applications so the enforce
+# policies for `default` are already in place when the workloads first sync.
+#
+# Destination namespace is `kyverno` because the only namespaced resources here are the
+# PolicyExceptions, which Kyverno only honours from that namespace (features.policyExceptions in
+# k8s/kyverno/kyverno-values.yaml). The policies are cluster-scoped, so it doesn't affect them.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno-policies
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+    targetRevision: main
+    path: k8s/policies
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      # prune: a rule deleted from git must stop being enforced. selfHeal: a policy edited or
+      # deleted by hand is put back, so enforcement can't be quietly switched off in-cluster.
+      prune: true
+      selfHeal: true

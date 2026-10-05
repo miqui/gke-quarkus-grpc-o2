@@ -1,0 +1,47 @@
+# Values for the `openobserve/openobserve-standalone` chart 0.92.2 (single-node OpenObserve,
+# not the HA/distributed chart), rendered by k8s/argocd/apps/openobserve.yaml.
+#
+# Release name "openobserve" + chart name "openobserve-standalone" resolve (via the
+# chart's fullname template) to plain "openobserve" for every object name, so the
+# Service is reachable at openobserve.observability.svc.cluster.local:5080. No Ingress: the UI is
+# reached with gke-port-forward.sh (http://localhost:5080).
+
+nameOverride: "openobserve"
+
+# Root credentials come from the openobserve-root-credentials Secret, which External Secrets
+# builds from GCP Secret Manager (externalsecrets.yaml in this directory) - nothing secret is in
+# this file or passed at install time. Prometheus/the collectors authenticate with the same
+# values via openobserve-remote-write-credentials.
+auth:
+  existingRootUserSecret:
+    name: openobserve-root-credentials
+    emailKey: ZO_ROOT_USER_EMAIL
+    passwordKey: ZO_ROOT_USER_PASSWORD
+
+# The chart's default (3650 days) keeps data forever; the PVC below is a fixed 5Gi persistent
+# disk, and a few days is plenty for a dev cluster that's rebuilt regularly anyway.
+config:
+  ZO_COMPACT_DATA_RETENTION_DAYS: "3"
+  # Off by default - with it off, /metrics (self-monitoring: ingestion rate, HTTP request
+  # latency, compactor, cache) returns 200 with an empty body, confirmed live.
+  ZO_PROMETHEUS_ENABLED: "true"
+
+# Sized for remote_write carrying cluster ops metrics (node-exporter, kube-state-metrics,
+# kubernetes-nodes-cadvisor - see write_relabel_configs in
+# k8s/observability/config/prometheus.yml) on top of the job-manager-api's own metrics -
+# cadvisor in particular is much higher-cardinality (per-container, per-node).
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "2"
+    memory: "2Gi"
+
+# GKE's default StorageClass (standard-rwo, pd-balanced).
+persistence:
+  enabled: true
+  size: 5Gi
+
+ingress:
+  enabled: false

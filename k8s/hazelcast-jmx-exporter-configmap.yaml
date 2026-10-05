@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hazelcast-jmx-exporter-config
+  labels:
+    app: hazelcast
+data:
+  config.yaml: |
+    # Exports every com.hazelcast:* JMX MBean (cluster/map/executor/operation stats - see
+    # k8s/hazelcast-deployment.yaml's -javaagent flag) using the exporter's own default
+    # attribute-path-derived metric names, rather than hand-writing per-metric "rules" -
+    # verify actual names live (port-forward :9404/metrics) before wiring up dashboard panels,
+    # since Hazelcast's own MBean layout isn't guaranteed stable across versions.
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    whitelistObjectNames: ["com.hazelcast:*"]

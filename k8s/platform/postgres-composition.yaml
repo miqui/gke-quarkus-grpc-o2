@@ -1,0 +1,141 @@
+# Provides a PostgresInstance as a Cloud SQL for PostgreSQL instance + database + user.
+#
+# Instance naming: the DatabaseInstance has no fixed name, so Crossplane names it
+# "<PostgresInstance name>-<random suffix>" and that becomes the Cloud SQL instance ID. Cloud SQL
+# blocks re-using a deleted instance's name for up to a week, so a fixed name would make every
+# rebuild within a week of a teardown fail; a fresh suffix per cluster sidesteps that entirely.
+#
+# Dev-cluster trade-offs, deliberate:
+#   - no automated backups / PITR, no deletion protection: gke-teardown.sh deletes the instance
+#     and its data. Change backupConfiguration / deletionProtection* for anything longer-lived.
+#   - ZONAL availability.
+# Hardening kept regardless: private IP only (no public IPv4), TLS required for every connection.
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: postgresinstance-cloudsql
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  compositeTypeRef:
+    apiVersion: platform.miqui.dev/v1alpha1
+    kind: PostgresInstance
+  mode: Pipeline
+  pipeline:
+    - step: cloudsql
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: instance
+            base:
+              apiVersion: sql.gcp.m.upbound.io/v1beta1
+              kind: DatabaseInstance
+              spec:
+                providerConfigRef:
+                  kind: ClusterProviderConfig
+                  name: default
+                forProvider:
+                  region: us-central1
+                  databaseVersion: POSTGRES_16
+                  deletionProtection: false
+                  settings:
+                    edition: ENTERPRISE
+                    tier: db-custom-1-3840
+                    availabilityType: ZONAL
+                    diskType: PD_SSD
+                    diskSize: 10
+                    diskAutoresize: false
+                    deletionProtectionEnabled: false
+                    backupConfiguration:
+                      enabled: false
+                      pointInTimeRecoveryEnabled: false
+                    ipConfiguration:
+                      ipv4Enabled: false
+                      # The VPC gke-deploy.sh creates and peers with Private Service Access.
+                      privateNetwork: projects/k8s-dev-412419/global/networks/dev-vpc
+                      sslMode: ENCRYPTED_ONLY
+                    databaseFlags:
+                      # pg_stat_statements is preloaded on Cloud SQL; this matches the old
+                      # in-cluster Postgres (count statements inside functions too) for the
+                      # "PostgreSQL Ops & Queries" Grafana dashboard.
+                      - name: pg_stat_statements.track
+                        value: all
+                    userLabels:
+                      managed-by: crossplane
+                      platform: gke-quarkus-grpc-o2
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.version
+                toFieldPath: spec.forProvider.databaseVersion
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.tier
+                toFieldPath: spec.forProvider.settings.tier
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.diskSizeGb
+                toFieldPath: spec.forProvider.settings.diskSize
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.connectionSecretName
+                toFieldPath: spec.writeConnectionSecretToRef.name
+              - type: ToCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: status.instanceName
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.privateIpAddress
+                toFieldPath: status.privateIp
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.connectionName
+                toFieldPath: status.connectionName
+
+          - name: database
+            base:
+              apiVersion: sql.gcp.m.upbound.io/v1beta1
+              kind: Database
+              spec:
+                providerConfigRef:
+                  kind: ClusterProviderConfig
+                  name: default
+                forProvider:
+                  instanceSelector:
+                    matchControllerRef: true
+                  # Deleting the instance removes the database; don't also try to DROP it first.
+                  deletionPolicy: ABANDON
+            patches:
+              # The external name is the Postgres database name.
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.databaseName
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+
+          - name: user
+            base:
+              apiVersion: sql.gcp.m.upbound.io/v1beta1
+              kind: User
+              spec:
+                providerConfigRef:
+                  kind: ClusterProviderConfig
+                  name: default
+                forProvider:
+                  instanceSelector:
+                    matchControllerRef: true
+                  # Postgres refuses to drop a role that owns objects (the app's tables); the
+                  # instance deletion removes it anyway.
+                  deletionPolicy: ABANDON
+                  passwordSecretRef:
+                    name: ""
+                    key: ""
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.userName
+                toFieldPath: metadata.annotations[crossplane.io/external-name]
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.passwordSecretRef.name
+                toFieldPath: spec.forProvider.passwordSecretRef.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.passwordSecretRef.key
+                toFieldPath: spec.forProvider.passwordSecretRef.key
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: function-auto-ready

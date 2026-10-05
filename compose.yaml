@@ -1,0 +1,97 @@
+# Local dependencies for the job-manager-api (defaults in application.properties match):
+#
+#   docker compose up -d                      Postgres 16 + Hazelcast (same cluster name as GKE)
+#   docker compose --profile otel up -d       + an OTel Collector exposing what the app pushes
+#                                             as Prometheus metrics on http://localhost:8889/metrics
+#                                             (the same exporter config as the cluster's collector)
+#   docker compose --profile app up -d        + the API itself from the local image
+#                                             (docker build -t job-manager-api:local .), run like
+#                                             the cluster runs it: read-only root fs, uid 10001
+#
+# Then run the API outside Docker with `./mvnw quarkus:dev` (Dev Services start their own Postgres)
+# or `java -jar target/quarkus-app/quarkus-run.jar` (uses this Postgres). Note: Quarkus reads a
+# `.env` file in the working directory as configuration, and this repo's `.env` holds 1Password
+# `op://` references for the GKE scripts (DB_PASSWORD among them) - run the jar from another
+# directory, or override DB_PASSWORD=message_app, or the database login fails.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: message_app
+      POSTGRES_PASSWORD: message_app
+      POSTGRES_DB: messagedb
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "message_app"]
+      interval: 5s
+      retries: 10
+
+  hazelcast:
+    image: hazelcast/hazelcast:5.7.0-slim
+    environment:
+      HZ_CLUSTERNAME: message-service-cache
+    ports:
+      - "5701:5701"
+
+  otel-collector:
+    profiles: [otel, app]
+    image: otel/opentelemetry-collector-contrib:0.114.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    configs:
+      - source: otel-collector
+        target: /etc/otelcol/config.yaml
+    ports:
+      - "4318:4318"
+      - "8889:8889"
+
+  job-manager-api:
+    profiles: [app]
+    image: job-manager-api:local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hazelcast:
+        condition: service_started
+    environment:
+      DB_HOST: postgres
+      DB_PASSWORD: message_app
+      HAZELCAST_HOST: hazelcast
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      POD_NAME: compose
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    ports:
+      - "9090:9090"
+      - "8081:8081"
+
+configs:
+  otel-collector:
+    content: |
+      receivers:
+        otlp:
+          protocols:
+            http:
+              endpoint: 0.0.0.0:4318
+      processors:
+        batch: {}
+      exporters:
+        prometheus:
+          endpoint: 0.0.0.0:8889
+          resource_to_telemetry_conversion:
+            enabled: true
+        debug:
+          verbosity: normal
+      service:
+        pipelines:
+          metrics:
+            receivers: [otlp]
+            processors: [batch]
+            exporters: [prometheus]
+          traces:
+            receivers: [otlp]
+            processors: [batch]
+            exporters: [debug]

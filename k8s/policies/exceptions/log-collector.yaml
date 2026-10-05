@@ -1,0 +1,25 @@
+# log-collector reads pod logs from the node: a hostPath mount of /var/log/pods, which on the GKE
+# nodes is root:root 0750 with 0640 files, so it also has to run as root. Exempt it from the
+# host-access rule (hostPath) and the container-context rule (runAsNonRoot) - in the audit set
+# only; the enforce set covers just the `default` namespace, which log-collector isn't in. The
+# rest of its securityContext (no privilege escalation, drop ALL, RuntimeDefault seccomp, read-only
+# root fs, read-only mount) is still set. Exceptions must live in the namespace enabled via
+# Kyverno's `features.policyExceptions` (kyverno-values.yaml).
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: log-collector
+  namespace: kyverno
+spec:
+  policyRefs:
+    - name: disallow-host-access-audit
+      kind: ValidatingPolicy
+    - name: require-secure-container-context-audit
+      kind: ValidatingPolicy
+  # Matches the DaemonSet (autogen) and its pods - both carry the app label.
+  matchConditions:
+    - name: log-collector-in-observability
+      expression: >-
+        object.metadata.?namespace.orValue('') == 'observability' &&
+        object.metadata.?labels.?app.orValue('') == 'log-collector'
+  reportResult: skip

@@ -1,0 +1,26 @@
+# The same rules, report-only, for namespaces whose workloads this repo doesn't harden yet:
+# `observability` (hand-written manifests without securityContexts), `headlamp` and `polaris`
+# (third-party charts). Violations show up in PolicyReports; nothing is blocked.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../rules
+nameSuffix: -audit
+patches:
+  - target:
+      group: policies.kyverno.io
+      kind: ValidatingPolicy
+    patch: |-
+      # These policies can never deny, so they must never block either: with the default
+      # failurePolicy (Fail) an unreachable Kyverno would still reject pod creation in the
+      # namespaces below. Ignore = "if Kyverno can't be reached, admit and skip the audit".
+      - op: add
+        path: /spec/failurePolicy
+        value: Ignore
+      - op: add
+        path: /spec/matchConstraints/namespaceSelector
+        value:
+          matchExpressions:
+            - key: kubernetes.io/metadata.name
+              operator: In
+              values: ["observability", "headlamp", "polaris"]

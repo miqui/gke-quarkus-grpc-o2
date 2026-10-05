@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: observability
+  labels:
+    app: prometheus
+    # Lets Headlamp's bundled Prometheus plugin (headlamp-k8s/plugins/prometheus) auto-detect
+    # this Service via its CUSTOM_HEADLAMP_LABEL search, so workload detail pages get metrics
+    # charts without any per-cluster plugin config.
+    headlamp-prometheus: "true"
+spec:
+  type: ClusterIP
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+      name: http

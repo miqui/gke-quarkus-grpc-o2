@@ -1,0 +1,49 @@
+receivers:
+  filelog:
+    # Only the `default` namespace (job-manager-api, postgres, hazelcast).
+    # Widening this to every pod (argocd, kube-system, crossplane-system, ...) is a real risk
+    # for OpenObserve's 5Gi PVC and its single-node MemTable - see PROMETHEUS.md step 1.
+    include: [/var/log/pods/default_*/*/*.log]
+    # Required by the container operator below, which reads the pod/namespace/container
+    # from the file path attribute (without it: "type '<nil>' cannot be parsed as log
+    # path field" on every line).
+    include_file_path: true
+    # A restarted collector skips whatever was logged while it was down rather than
+    # replaying every file from the start (no file_storage checkpointing here).
+    start_at: end
+    operators:
+      # Parses the CRI line format ("<time> stdout F <message>"), re-joins lines the runtime
+      # split, and derives k8s.namespace.name / k8s.pod.name / k8s.pod.uid /
+      # k8s.container.name / k8s.container.restart_count from the file path - so no
+      # k8sattributes processor (and no ClusterRole) is needed for those.
+      - type: container
+        id: container-parser
+
+processors:
+  batch: {}
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  # Same root basic auth the metrics/traces collector uses (see config/otel-collector.yaml).
+  basicauth/openobserve:
+    client_auth:
+      username: ${env:OPENOBSERVE_USER}
+      password: ${env:OPENOBSERVE_PASSWORD}
+
+exporters:
+  otlphttp/openobserve:
+    endpoint: http://openobserve.observability.svc.cluster.local:5080/api/default
+    headers:
+      # One OpenObserve log stream for all pod logs (default would be "default").
+      stream-name: pod_logs
+    auth:
+      authenticator: basicauth/openobserve
+
+service:
+  extensions: [health_check, basicauth/openobserve]
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: [batch]
+      exporters: [otlphttp/openobserve]

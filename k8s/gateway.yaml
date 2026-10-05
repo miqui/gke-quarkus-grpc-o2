@@ -1,0 +1,93 @@
+# Public entry point: grpc.miqui.dev:443 -> job-manager-api (gRPC), through a GKE-managed global
+# external Application Load Balancer (Gateway API, gatewayClass gke-l7-global-external-managed).
+# The only thing in the cluster reachable from the internet; every tool is port-forward only.
+#
+# Clients speak gRPC over TLS (HTTP/2) to the load balancer, which terminates TLS and forwards
+# cleartext HTTP/2 (h2c) to the pods - see appProtocol in service.yaml. gRPC is an HTTP/2 POST,
+# so an HTTPRoute carries it (this gateway class has no GRPCRoute support).
+#
+# Everything the Gateway points at by name is created by gke-deploy.sh outside the cluster, so it
+# survives rebuilds and never lives in git:
+#   grpc-ip        global static IP (the Cloudflare A record points here)
+#   grpc-cert-map  Certificate Manager map -> Google-managed cert for grpc.miqui.dev (DNS-authorized)
+#   grpc-tls       SSL policy: MODERN profile, TLS 1.2 minimum
+#
+# There is no port 80 listener: gRPC clients never use plain HTTP, so a redirect would serve no one.
+# The API itself has no authentication yet - anyone can call it, reflection included.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: grpc
+  labels:
+    app: job-manager-api
+  annotations:
+    networking.gke.io/certmap: grpc-cert-map
+spec:
+  gatewayClassName: gke-l7-global-external-managed
+  addresses:
+    - type: NamedAddress
+      value: grpc-ip
+  listeners:
+    # TLS for this listener comes from the cert map annotation above, so it has no `tls` block.
+    - name: https
+      protocol: HTTPS
+      port: 443
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: grpc
+  labels:
+    app: job-manager-api
+spec:
+  parentRefs:
+    - name: grpc
+      sectionName: https
+  hostnames:
+    - grpc.miqui.dev
+  rules:
+    # All services (job.v1.*, grpc.health.v1, grpc.reflection.*) share one backend port.
+    - backendRefs:
+        - name: job-manager-api
+          port: 9090
+---
+# The load balancer's own health check (separate from the kubelet probes): plain HTTP to the
+# readiness endpoint on the Quarkus management port, since the LB can't speak grpc.health.v1.
+# Readiness, so a pod that is draining (SIGTERM flips it DOWN) drops out of the LB too, not just
+# out of the Service.
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: job-manager-api
+  labels:
+    app: job-manager-api
+spec:
+  default:
+    checkIntervalSec: 5
+    timeoutSec: 3
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_FIXED_PORT
+        port: 8081
+        requestPath: /q/health/ready
+  targetRef:
+    group: ""
+    kind: Service
+    name: job-manager-api
+---
+apiVersion: networking.gke.io/v1
+kind: GCPGatewayPolicy
+metadata:
+  name: grpc
+  labels:
+    app: job-manager-api
+spec:
+  default:
+    sslPolicy: grpc-tls
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: grpc

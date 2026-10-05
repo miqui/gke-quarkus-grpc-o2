@@ -1,0 +1,37 @@
+# Values for the `external-secrets/external-secrets` chart 2.11.0, rendered by
+# k8s/argocd/apps/external-secrets.yaml.
+
+installCRDs: true
+
+serviceAccount:
+  create: true
+  # Fixed name: gke-deploy.sh binds external-secrets/external-secrets to the external-secrets
+  # GCP service account, which gke-secrets-seed.sh grants secretAccessor on exactly the
+  # platform's secrets. The ClusterSecretStore (k8s/platform/cluster-secret-store.yaml) sets no
+  # credentials of its own, so the controller uses this ambient identity.
+  name: external-secrets
+  annotations:
+    iam.gke.io/gcp-service-account: external-secrets@k8s-dev-412419.iam.gserviceaccount.com
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
+
+webhook:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+certController:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi

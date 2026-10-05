@@ -1,0 +1,83 @@
+# PostgresInstance: the platform's "give me a Postgres database" API. An application declares one
+# in its own namespace (k8s/postgres.yaml) without knowing anything about Cloud SQL; the
+# Composition in postgres-composition.yaml decides how it's provided.
+#
+# Namespaced (Crossplane v2): the composed Cloud SQL resources and the connection Secret land in
+# the same namespace as the PostgresInstance, next to the workloads that use them.
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: postgresinstances.platform.miqui.dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  scope: Namespaced
+  group: platform.miqui.dev
+  names:
+    kind: PostgresInstance
+    plural: postgresinstances
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      additionalPrinterColumns:
+        - name: INSTANCE
+          type: string
+          jsonPath: .status.instanceName
+        - name: PRIVATE-IP
+          type: string
+          jsonPath: .status.privateIp
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - passwordSecretRef
+                - connectionSecretName
+              properties:
+                version:
+                  type: string
+                  default: POSTGRES_16
+                  enum: [POSTGRES_15, POSTGRES_16, POSTGRES_17]
+                tier:
+                  description: >-
+                    Cloud SQL machine tier. The default (1 vCPU / 3.75 GiB) allows 100
+                    connections; shared-core tiers (db-f1-micro: 25, db-g1-small: 50) are too few
+                    for the API's connection pools at full HPA scale.
+                  type: string
+                  default: db-custom-1-3840
+                diskSizeGb:
+                  type: integer
+                  default: 10
+                  minimum: 10
+                databaseName:
+                  type: string
+                  default: messagedb
+                userName:
+                  type: string
+                  default: message_app
+                passwordSecretRef:
+                  description: Secret (same namespace) holding the application user's password.
+                  type: object
+                  required: [name, key]
+                  properties:
+                    name:
+                      type: string
+                    key:
+                      type: string
+                connectionSecretName:
+                  description: >-
+                    Secret (same namespace) to write connection details to: privateIP,
+                    connectionName and the server CA certificate.
+                  type: string
+            status:
+              type: object
+              properties:
+                instanceName:
+                  type: string
+                privateIp:
+                  type: string
+                connectionName:
+                  type: string

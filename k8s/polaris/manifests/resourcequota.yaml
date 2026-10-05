@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: polaris-quota
+  namespace: polaris
+spec:
+  hard:
+    requests.cpu: "250m"
+    requests.memory: 256Mi
+    limits.cpu: "500m"
+    limits.memory: 512Mi
+    pods: "3"

@@ -1,0 +1,78 @@
+# Tails pod logs from the node's /var/log/pods and ships them to OpenObserve. One pod per node:
+# any node can run `default`-namespace workloads, and the filelog receiver only picks up that
+# namespace's files (see config/log-collector.yaml).
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: log-collector
+  namespace: observability
+  labels:
+    app: log-collector
+spec:
+  selector:
+    matchLabels:
+      app: log-collector
+  template:
+    metadata:
+      labels:
+        app: log-collector
+    spec:
+      containers:
+        - name: log-collector
+          image: otel/opentelemetry-collector-contrib:0.114.0
+          args:
+            - "--config=/etc/otelcol-contrib/config.yaml"
+          env:
+            - name: OPENOBSERVE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: openobserve-remote-write-credentials
+                  key: username
+            - name: OPENOBSERVE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: openobserve-remote-write-credentials
+                  key: password
+          # Root is required: /var/log/pods is root:root 0750 and the log files are 0640 on the
+          # GKE nodes. Everything else is locked down; covered by the PolicyException in
+          # k8s/policies/exceptions/log-collector.yaml (runAsNonRoot + the hostPath below).
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otelcol-contrib
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "96Mi"
+            limits:
+              cpu: "200m"
+              memory: "192Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: log-collector-config
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods

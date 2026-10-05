@@ -1,0 +1,17 @@
+.git
+.github
+.env*
+.claude
+.idea
+.vscode
+target
+tests
+k8s
+scripts
+*.md
+*.sh
+k6-*.js
+compose.yaml
+Dockerfile
+.dockerignore
+kubeconfig.yml

@@ -1,0 +1,29 @@
+# ArgoCD Application syncing k8s/observability/ - the OTel Collector, Prometheus, Grafana (and its
+# dashboards), kube-state-metrics, node-exporter, the log collector, their RBAC, NetworkPolicies,
+# the ExternalSecrets for this namespace's credentials, and the namespace itself (see the
+# kustomization there). OpenObserve is its own Application (next wave) because its chart reads
+# the openobserve-root-credentials Secret this one creates.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: observability
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+    targetRevision: main
+    path: k8s/observability
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      # prune: objects deleted from git (including the previous hash-named ConfigMaps, see the
+      # configMapGenerator in the kustomization) are removed. selfHeal: a hand-edited object -
+      # e.g. a `kubectl apply` of a dashboard from an unmerged branch - is put back to what's on
+      # main. The Namespace opts out of pruning, see namespace.yaml.
+      prune: true
+      selfHeal: true

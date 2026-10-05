@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+  annotations:
+    # The observability Argo CD Application (k8s/argocd/apps/observability.yaml) has
+    # prune: true. Without this, deleting this file would make Argo delete the namespace - and
+    # with it OpenObserve's PVC and everything ingested so far. Prune=false keeps the namespace
+    # even if it's ever dropped from git; removing it becomes a deliberate manual step.
+    argocd.argoproj.io/sync-options: Prune=false

@@ -1,0 +1,44 @@
+# Values for the `argo/argocd-image-updater` chart 1.3.1 (Image Updater v1.3.0), rendered by
+# apps/argocd-image-updater.yaml. The ImageUpdater CR it acts on is in image-updater/.
+
+serviceAccount:
+  create: true
+  # Fixed name: gke-deploy.sh binds exactly argocd/argocd-image-updater to the
+  # argocd-image-updater GCP service account (Workload Identity), which holds
+  # roles/artifactregistry.reader on the springboot-grpc-o2 repo and nothing else.
+  name: argocd-image-updater
+  annotations:
+    iam.gke.io/gcp-service-account: argocd-image-updater@k8s-dev-412419.iam.gserviceaccount.com
+
+config:
+  registries:
+    - name: Artifact Registry
+      prefix: us-central1-docker.pkg.dev
+      api_url: https://us-central1-docker.pkg.dev
+      ping: no
+      # Short-lived OAuth token for the Workload Identity-bound GSA, fetched from the GKE metadata
+      # server by the script below - no stored registry credential anywhere. Tokens live ~1h;
+      # re-fetch well before that.
+      credentials: ext:/scripts/gcp-artifact-registry.sh
+      credsexpire: 30m
+
+authScripts:
+  enabled: true
+  scripts:
+    # Prints `oauth2accesstoken:<token>`, the username/password form Artifact Registry accepts.
+    # The image is Alpine: busybox wget + sed only, no curl/jq.
+    gcp-artifact-registry.sh: |
+      #!/bin/sh
+      set -e
+      token=$(wget -qO- --header 'Metadata-Flavor: Google' \
+        'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token' \
+        | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+      [ -n "$token" ] || { echo "no token from GKE metadata server" >&2; exit 1; }
+      echo "oauth2accesstoken:${token}"
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    memory: 256Mi

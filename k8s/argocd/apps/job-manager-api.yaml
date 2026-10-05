@@ -1,0 +1,40 @@
+# ArgoCD Application syncing k8s/ - the job-manager-api and everything it needs in `default`:
+# its PostgresInstance (Cloud SQL via the platform's Crossplane Composition) + postgres-exporter,
+# the ExternalSecret for its DB password, Hazelcast, the Deployment/Service/HPA, the public
+# Gateway (grpc.miqui.dev) and the namespace's NetworkPolicies and ResourceQuota - everything
+# k8s/kustomization.yaml produces. Last wave: it needs the policies, the secret store and the
+# PostgresInstance API to exist first.
+#
+# Which image tag job-manager-api runs is decided by Argo CD Image Updater (see
+# k8s/argocd/image-updater/), which writes it into spec.source.kustomize of this Application -
+# the root Application ignores that field so it doesn't revert the update.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: job-manager-api
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+    targetRevision: main
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      # Gateway-API and networking.gke.io policy kinds, plus the XR, are served by CRDs that
+      # (for the XR) are created in an earlier wave; the dry run can be ahead of discovery.
+      - SkipDryRunOnMissingResource=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 2m

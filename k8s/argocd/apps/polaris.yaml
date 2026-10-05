@@ -1,0 +1,37 @@
+# Polaris (best-practice / misconfiguration dashboard) from its upstream chart with
+# k8s/polaris/polaris-values.yaml, plus this repo's namespace-level manifests for it
+# (ResourceQuota, NetworkPolicy) from k8s/polaris/manifests/. Dashboard only (no admission
+# webhook - that's Kyverno's job), reachable only through `kubectl port-forward`
+# (gke-port-forward.sh); read-only RBAC, no Secrets.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: polaris
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://charts.fairwinds.com/stable
+      chart: polaris
+      targetRevision: 6.0.1
+      helm:
+        releaseName: polaris
+        valueFiles:
+          - $values/k8s/polaris/polaris-values.yaml
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      path: k8s/polaris/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: polaris
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

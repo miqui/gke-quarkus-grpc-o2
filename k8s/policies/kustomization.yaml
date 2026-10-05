@@ -1,0 +1,13 @@
+# Kyverno policies (policies.kyverno.io/v1 CEL types - ClusterPolicy is deprecated).
+#   rules/                    shared rule bodies, unscoped
+#   overlays/enforce-default  rules -> Deny, `default` namespace
+#   overlays/audit-other      rules -> Audit, `observability` + `headlamp`
+#   audit-only/               rules that only ever audit
+#   exceptions/               PolicyExceptions for known, accepted violations
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - overlays/enforce-default
+  - overlays/audit-other
+  - audit-only
+  - exceptions

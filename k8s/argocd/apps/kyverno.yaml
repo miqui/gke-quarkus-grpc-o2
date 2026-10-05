@@ -1,0 +1,36 @@
+# Kyverno (policy engine) from its upstream chart with k8s/kyverno/kyverno-values.yaml. The
+# policies themselves are the kyverno-policies Application (next wave), so the engine and its
+# CRDs exist before any policy is applied.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://kyverno.github.io/kyverno/
+      chart: kyverno
+      # Chart 3.9.1 = Kyverno v1.19.1
+      targetRevision: 3.9.1
+      helm:
+        releaseName: kyverno
+        valueFiles:
+          - $values/k8s/kyverno/kyverno-values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # Kyverno's CRDs exceed the 256KiB last-applied-configuration annotation limit of
+      # client-side apply.
+      - ServerSideApply=true

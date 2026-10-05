@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: job-manager-api
+  labels:
+    app: job-manager-api
+spec:
+  type: ClusterIP
+  selector:
+    app: job-manager-api
+  ports:
+    # kubernetes.io/h2c: the Gateway's load balancer speaks cleartext HTTP/2 to the pods (TLS ends
+    # at the load balancer). Without it the LB would use HTTP/1.1, which gRPC can't run over.
+    - port: 9090
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+      appProtocol: kubernetes.io/h2c
+    # Management interface (/q/health): the LB health check (see gateway.yaml) and nothing else. Not routed publicly.
+    - port: 8081
+      targetPort: mgmt
+      protocol: TCP
+      name: mgmt

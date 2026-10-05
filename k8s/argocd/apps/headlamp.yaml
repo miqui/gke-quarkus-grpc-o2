@@ -1,0 +1,36 @@
+# Headlamp (Kubernetes web UI) from its upstream chart with k8s/headlamp/headlamp-values.yaml,
+# plus this repo's namespace-level manifests for it (ResourceQuota, NetworkPolicy) from
+# k8s/headlamp/manifests/. Reachable only through `kubectl port-forward` (gke-port-forward.sh);
+# its ServiceAccount is bound to the read-only `view` ClusterRole, not cluster-admin.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: headlamp
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://kubernetes-sigs.github.io/headlamp/
+      chart: headlamp
+      targetRevision: 0.45.0
+      helm:
+        releaseName: headlamp
+        valueFiles:
+          - $values/k8s/headlamp/headlamp-values.yaml
+    - repoURL: https://github.com/miqui/gke-quarkus-grpc-o2.git
+      targetRevision: main
+      path: k8s/headlamp/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: headlamp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

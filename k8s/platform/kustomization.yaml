@@ -1,0 +1,20 @@
+# Platform layer, synced by k8s/argocd/apps/platform.yaml once the External Secrets and
+# Crossplane controllers (and their CRDs) exist:
+#
+#   - the ClusterSecretStore every ExternalSecret in the repo reads through (GCP Secret Manager)
+#   - Crossplane's GCP Cloud SQL provider, the functions its Composition runs, and the provider's
+#     credentials config (Workload Identity - no key file)
+#   - the PostgresInstance API (XRD) and its Cloud SQL Composition, which k8s/postgres.yaml uses
+#
+# Argo CD sync waves inside this Application: packages first (0), then the objects whose CRDs
+# those packages install (1).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - cluster-secret-store.yaml
+  - crossplane-runtime-config.yaml
+  - crossplane-packages.yaml
+  - crossplane-provider-config.yaml
+  - postgres-xrd.yaml
+  - postgres-composition.yaml

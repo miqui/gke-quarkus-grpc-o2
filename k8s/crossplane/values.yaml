@@ -1,0 +1,18 @@
+# Values for the `crossplane-stable/crossplane` chart 2.4.2, rendered by
+# k8s/argocd/apps/crossplane.yaml. Chart defaults otherwise; providers, functions and their
+# config are separate manifests in k8s/platform/, not chart values, so they're diffed and
+# pruned by Argo CD like everything else.
+
+resourcesCrossplane:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+resourcesRBACManager:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
