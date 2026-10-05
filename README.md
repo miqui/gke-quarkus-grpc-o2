@@ -1266,4 +1266,4 @@ both are public like everything else on this API - there is no authentication ye
 what lets `grpcurl` and the k6 scripts run without the `.proto`.
 
 Design rationale is in [API-DESIGN.md](API-DESIGN.md), copy-paste `grpcurl` calls are in
-[EXAMPLES.md](EXAMPLES.md), and `./test-api.sh` runs the whole contract as a smoke test.
+[EXAMPLES.md](EXAMPLES.md), and `./test-api.sh` runs the whole contract as a smoke test. To click through it in Postman, see [POSTMAN.md](POSTMAN.md).
