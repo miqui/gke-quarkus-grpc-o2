@@ -15,7 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- 3.40 is the current LTS (2026-09-30, supported to 2027-09-30). -->
         <quarkus.platform.version>3.40.1</quarkus.platform.version>
-        <!-- Same client line the Spring Boot service ran against the 5.7 member in the cluster. -->
+        <!-- Kept at 5.5.0 on purpose (talks to the 5.7 member fine): 5.7.0 bundles more vulnerable Jackson copies. See TRIVY.md, "Accepted risk". -->
         <hazelcast.version>5.5.0</hazelcast.version>
         <assertj.version>3.27.7</assertj.version>
         <surefire.version>3.5.4</surefire.version>

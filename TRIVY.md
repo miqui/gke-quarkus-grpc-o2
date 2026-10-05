@@ -123,6 +123,23 @@ tiles are fixed to one severity each, and the two tables always show all four se
   metadata server. Without the grant every `job-manager-api` scan fails with
   `DENIED: Permission 'artifactregistry.repositories.downloadArtifacts' denied` and there is no
   VulnerabilityReport for the API.
+- **Accepted risk: 3 High CVEs in the API image (reviewed 2026-10-05).** CVE-2026-68494,
+  CVE-2026-89407 and CVE-2026-89425 are denial-of-service bugs in a copy of jackson-core 2.17.2
+  that Hazelcast bundles inside its client jar (`hazelcast-5.5.0.jar`). The app's own
+  jackson-core is 2.21.7, which has the fixes. A Maven version override can't replace a copy
+  bundled inside another jar, and the only newer client, 5.7.0, is worse: it bundles
+  jackson-core and jackson-databind 2.21.2 plus Jackson 3.1.2, for 13 Highs instead of 3
+  (both jars scanned locally with Trivy 0.74.0). So the client stays on 5.5.0, and the findings
+  stay visible in the VulnerabilityReport and on the dashboard. They are not suppressed in
+  Trivy, so they can't be forgotten. **Revisit** when Hazelcast ships a client that bundles
+  jackson-core >= 2.21.7 (and, if it bundles them, jackson-databind >= 2.21.7 and Jackson 3
+  >= 3.1.7). Check with:
+
+  ```bash
+  curl -s https://repo1.maven.org/maven2/com/hazelcast/hazelcast/maven-metadata.xml | grep -oE "<version>5\.[0-9.]+</version>" | tail -3
+  curl -sfLo hz.jar https://repo1.maven.org/maven2/com/hazelcast/hazelcast/<v>/hazelcast-<v>.jar && mkdir -p hz && mv hz.jar hz/
+  docker run --rm -v "$PWD/hz:/scan" aquasec/trivy:0.74.0 rootfs --quiet --scanners vuln --severity HIGH,CRITICAL /scan
+  ```
 - **OpenObserve is not scanned** (`trivyOperator.excludeImages: "o2cr.ai/openobserve/*"`): its
   registry redirects to public ECR, which refuses Trivy's pull, so the job only ever failed.
 
