@@ -28,6 +28,18 @@ operator:
 trivyOperator:
   excludeImages: "o2cr.ai/openobserve/*"
 
+# Scan job containers (chart default limit 500M). Scanning the API image - a Quarkus fast-jar with
+# ~150 jars, each analysed for the Java DB - was OOMKilled at 500M (2026-10-05). Only the limit is
+# raised; the request stays at the chart's 100M, so scheduling (and node count) is unchanged.
+trivy:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100M
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
 resources:
   requests:
     cpu: 100m

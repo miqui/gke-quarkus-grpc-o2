@@ -90,3 +90,89 @@ kubectl get events -A --field-selector reason=TriggeredScaleUp \
   -o custom-columns='T:.lastTimestamp,NS:.metadata.namespace,OBJ:.involvedObject.name,MSG:.message'
 kubectl describe nodes | grep -A8 "Allocated resources" | grep -E "cpu|memory"
 ```
+
+## Symptoms seen on the first rebuild (2026-10-05) and their fixes
+
+### API pods `Init:CreateContainerConfigError` for ~10 minutes after bootstrap
+
+`secret "postgres-credentials" not found`, then `couldn't find key privateIP in Secret
+default/cloudsql-connection`. **Benign:** Crossplane is still creating Cloud SQL, and the pods
+start on their own once the instance and its connection secret exist. `postgres-exporter` shows
+the same error for the same reason. A one-off Kyverno `disallow-latest-tag` audit event on the
+first pods is also expected: they start from `:latest` until Image Updater pins the CI tag.
+
+```bash
+kubectl get postgresinstance -A                 # READY False -> True when Cloud SQL is up
+```
+
+### Trivy: no VulnerabilityReport for the `job-manager-api` container
+
+Scan jobs failed with `DENIED: Permission 'artifactregistry.repositories.downloadArtifacts' denied
+on resource ... repositories/springboot-grpc-o2`. Scan jobs authenticate with the Workload
+Identity token of KSA `trivy-system/trivy-operator`, and that principal had no access to the repo.
+
+**Fix:** `gke-deploy.sh` grants it `roles/artifactregistry.reader` on the repo. On an existing
+cluster, run the same binding by hand:
+
+```bash
+gcloud artifacts repositories add-iam-policy-binding springboot-grpc-o2 --location=us-central1 --project=k8s-dev-412419 --role=roles/artifactregistry.reader --member="principal://iam.googleapis.com/projects/220906294299/locations/global/workloadIdentityPools/k8s-dev-412419.svc.id.goog/subject/ns/trivy-system/sa/trivy-operator"
+```
+
+Keep it on one line: a terminal that wraps a long command can add line breaks when you copy it,
+and the shell then runs the pieces as separate commands (`argument --member --role: Must be
+specified`).
+
+The next attempt got past the registry and was **OOMKilled**
+(`"container":"job-manager-api","status.reason":"OOMKilled"` in the operator log): the Quarkus
+fast-jar is ~150 jars, and the 500M chart default isn't enough to analyse them.
+**Fix:** `trivy.resources.limits.memory: 1Gi` in `k8s/trivy-operator/trivy-operator-values.yaml`,
+with the request left at 100M so scheduling is unchanged.
+
+**Force a rescan.** Reports are labelled with the **ReplicaSet** name, not the Deployment
+name, so `-l trivy-operator.resource.name=job-manager-api` matches nothing:
+
+```bash
+RS=$(kubectl get rs -n default -l app=job-manager-api -o jsonpath='{.items[?(@.status.replicas>0)].metadata.name}')
+kubectl delete vulnerabilityreports -n default -l trivy-operator.resource.name=$RS
+kubectl get vulnerabilityreports -n default -o wide | grep job-manager-api   # expect a row for the job-manager-api container
+kubectl logs -n trivy-system deploy/trivy-operator --since=10m | grep '"container":"job-manager-api"'   # errors, if any
+```
+
+### Trivy: OpenObserve scan jobs fail on every attempt
+
+`unable to find the specified image "o2cr.ai/openobserve/openobserve:v0.92.2" ... GET
+https://public.ecr.aws/v2/zinclabs/openobserve/manifests/v0.92.2: DENIED: Not Authorized`.
+`o2cr.ai` redirects to public ECR, which refuses Trivy's pull (the kubelet pulls fine).
+**Fix:** we don't scan it: `trivyOperator.excludeImages: "o2cr.ai/openobserve/*"`.
+
+### Prometheus OOMKilled once during bootstrap
+
+`Last State: Terminated, Reason: OOMKilled` on the prometheus pod, preceded in its log by
+`Failed to send batch, retrying` and `Remote storage resharding from=1 to=44`. OpenObserve wasn't
+accepting writes yet, so remote_write scaled up to 44 shards, each buffering samples in memory,
+and Prometheus went past its 512Mi limit. **Fix:** `queue_config` caps remote_write at 4 shards
+x 2500 samples (`k8s/observability/config/prometheus.yml`), and the memory limit is now 768Mi.
+See PROMETHEUS.md section 7.
+
+```bash
+kubectl get pod -n observability -l app=prometheus          # RESTARTS 0
+kubectl describe pod -n observability -l app=prometheus | grep -A3 "Last State"
+```
+
+### Argo CD `observability` stuck OutOfSync after a Prometheus config change
+
+Message: `one or more objects failed to apply, reason: configmaps "prometheus-config-<old-hash>"
+not found. Retrying attempt #N`. The Prometheus config is a `configMapGenerator` ConfigMap, so
+every change gives it a new name. The new ConfigMap and Deployment were applied fine and
+Prometheus was running the new config. But the self-heal sync had listed the *old* ConfigMap
+among its resources, and once that was pruned, every retry failed on it. A hard refresh doesn't
+clear it, because the running operation keeps its resource list.
+
+**Fix:** terminate the operation, then start a normal sync, in the Argo CD UI (*Terminate*, then
+*Sync*) or:
+
+```bash
+kubectl patch application observability -n argocd --type merge -p '{"status":{"operationState":{"phase":"Terminating"}}}'
+kubectl patch application observability -n argocd --type merge -p '{"operation":{"initiatedBy":{"username":"admin"},"sync":{"revision":"main","prune":true}}}'
+kubectl get application observability -n argocd   # Synced / Healthy
+```
