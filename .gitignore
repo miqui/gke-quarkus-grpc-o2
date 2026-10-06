@@ -23,3 +23,6 @@ target/
 
 ### Python helpers ###
 __pycache__/
+
+# draw.io autosave backups
+.$*.bkp
