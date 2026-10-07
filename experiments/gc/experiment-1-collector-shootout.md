@@ -41,6 +41,16 @@ k6 p99 and the server p99 axis.
 - **On the frontier:** Serial (cheapest) and Parallel (lowest latency).
 - **Dominated:** G1, ZGC and Shenandoah. They cost 16-25% more CPU than Serial and have no latency advantage.
 
+### Charts
+
+Client-side p99 (k6, includes the network from the operator's machine) against CPU cost:
+
+![Frontier: k6 p99 vs CPU-s per 1k requests](results/frontier-k6p99.svg)
+
+Server-side p99 (Prometheus, no network) against CPU cost. Same two variants on the frontier:
+
+![Frontier: server p99 vs CPU-s per 1k requests](results/frontier-serverp99.svg)
+
 ## What it means
 
 1. **Keep the default (Serial) unless p99 matters more than ~4% CPU.** Parallel trades 4% more CPU for ~7%
