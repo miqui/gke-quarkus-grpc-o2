@@ -10,7 +10,7 @@
 #   1. points the job-manager-api Argo CD Application at the overlay on $BRANCH (the root app's
 #      auto-sync is paused first, or its self-heal would put the Application back; `--restore` undoes it)
 #   2. waits until the pod runs the overlay's JDK_JAVA_OPTIONS with one replica and no HPA, and checks
-#      the JVM really selected the collector (jcmd VM.flags)
+#      the JVM really selected the collector (the "Using ..." line of its GC log)
 #   3. resets the data (k6-reset-jobs.js deletes every job), warms up, measures with a fixed arrival rate
 #   4. reads Prometheus for the measured window and writes experiments/gc/results/<variant>-<ts>.json
 #
@@ -21,7 +21,7 @@
 #   RATE            arrival rate, iterations/s (required) — the calibrated rate from "Goal and decisions"
 #   P99_LIMIT_MS    SLO: fail the measured window if p99 is above this []
 #   WARMUP, DURATION  k6 durations [2m, 10m]; K6_SCRIPT [k6-job-lifecycle.js]; GRPC_ADDR [grpc.miqui.dev:443]
-#   BRANCH          git branch the overlays are on [exp/gc-pareto]
+#   BRANCH          git branch the overlays are on [main]
 #   RESULTS_DIR     [experiments/gc/results]
 #   ALLOW_IMAGE_UPDATER=1  skip the Image Updater check (you take responsibility for the image staying fixed)
 #   DRY_RUN=1       no cluster calls
@@ -33,7 +33,7 @@ ARGO_NS=argocd
 APP=job-manager-api
 ROOT_APP=root
 APP_NS=default
-BRANCH="${BRANCH:-exp/gc-pareto}"
+BRANCH="${BRANCH:-main}"
 RESULTS_DIR="${RESULTS_DIR:-experiments/gc/results}"
 K6_SCRIPT="${K6_SCRIPT:-k6-job-lifecycle.js}"
 GRPC_ADDR="${GRPC_ADDR:-grpc.miqui.dev:443}"
@@ -156,18 +156,20 @@ STARTUP_S=$(jq -r --arg c "$APP" '
   | (($ready | fromdateiso8601) - ($started | fromdateiso8601))' <<<"$POD_JSON")
 HZ_POD=$(kubectl -n "$APP_NS" get pods -l app=hazelcast -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
 HZ_NODE=$(kubectl -n "$APP_NS" get pods -l app=hazelcast -o jsonpath='{.items[0].spec.nodeName}' 2>/dev/null || true)
-VM_FLAGS=$(kubectl -n "$APP_NS" exec "$POD" -c "$APP" -- jcmd 1 VM.flags 2>/dev/null || true)
-if [[ -n "$VM_FLAGS" ]]; then
-  for flag in $EXPECTED_OPTS; do
-    [[ "$flag" == -XX:+* ]] || continue
-    grep -q -- "+${flag#-XX:+}" <<<"$VM_FLAGS" || die "the JVM does not report $flag in VM.flags - the overlay did not take effect"
-  done
-  GC_REPORTED=$(tr ' ' '\n' <<<"$VM_FLAGS" | grep -E '^-XX:\+Use.*GC$' | tr '\n' ' ')
-  echo "JVM selected: ${GC_REPORTED:-no explicit GC flag (ergonomics chose)}"
-else
-  echo "WARNING: could not run jcmd in the pod; the collector was not verified" >&2
-  GC_REPORTED=""
-fi
+# The JRE image has no jcmd; the GC log the overlays switch on says which collector the JVM chose
+# ("[gc] Using G1"). An overlay without a collector flag (baseline) is expected to get SerialGC.
+case "$EXPECTED_OPTS" in
+  *UseSerialGC*) WANT_GC="Serial" ;;
+  *UseParallelGC*) WANT_GC="Parallel" ;;
+  *UseG1GC*) WANT_GC="G1" ;;
+  *UseZGC*) WANT_GC="The Z Garbage Collector" ;;
+  *UseShenandoahGC*) WANT_GC="Shenandoah" ;;
+  *) WANT_GC="Serial" ;;
+esac
+GC_REPORTED=$(kubectl -n "$APP_NS" logs "$POD" -c "$APP" | grep -m1 -E '^\[.*\]\[gc[],].*Using ' | sed 's/.*Using //' || true)
+[[ -n "$GC_REPORTED" ]] || die "no 'Using <collector>' line in the pod's log - is the GC log (-Xlog:gc*) on?"
+[[ "$GC_REPORTED" == "$WANT_GC" ]] || die "the JVM selected '$GC_REPORTED' but this overlay should give '$WANT_GC'"
+echo "JVM selected: $GC_REPORTED"
 echo "startup (container start -> Ready): ${STARTUP_S}s on $NODE"
 
 # ---- 4. reset, warm up, measure ---------------------------------------------------------------
