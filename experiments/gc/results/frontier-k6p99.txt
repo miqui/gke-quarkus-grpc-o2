@@ -1,0 +1,7 @@
+variant     runs  k6.p99_ms               derived.cpu_seconds_per_1k_requests  SLO   frontier
+parallel    3     58.643 (55.201-60.064)  2.677 (2.616-2.836)                  pass  yes
+zgc         3     62.475 (59.482-66.340)  3.227 (3.155-3.244)                  pass  -
+shenandoah  3     62.525 (60.267-67.353)  3.185 (3.166-3.540)                  pass  -
+baseline    6     62.883 (61.674-71.013)  2.579 (2.399-3.061)                  pass  yes
+g1          3     65.513 (65.143-66.946)  3.005 (2.957-3.027)                  pass  -
+wrote experiments/gc/results/frontier-k6p99.svg

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="480" font-family="sans-serif" font-size="12">
+<rect width="720" height="480" fill="#fff"/>
+<rect x="70" y="70" width="580" height="340" fill="none" stroke="#999"/>
+<text x="360.0" y="460" text-anchor="middle">k6.p99_ms (lower is better)</text>
+<text x="18" y="240.0" text-anchor="middle" transform="rotate(-90 18 240.0)">derived.cpu_seconds_per_1k_requests (lower is better)</text>
+<polyline fill="none" stroke="#0F7B6C" stroke-width="2" stroke-dasharray="4 3" points="99.0,346.8 421.1,393.0"/>
+<circle cx="421.1" cy="393.0" r="6" fill="#0F7B6C"/>
+<text x="430.1" y="385.0">baseline</text>
+<circle cx="621.0" cy="191.9" r="6" fill="#999"/>
+<text x="630.0" y="183.9">g1</text>
+<circle cx="99.0" cy="346.8" r="6" fill="#0F7B6C"/>
+<text x="108.0" y="338.8">parallel</text>
+<circle cx="394.0" cy="106.9" r="6" fill="#999"/>
+<text x="403.0" y="98.9">shenandoah</text>
+<circle cx="390.2" cy="87.0" r="6" fill="#999"/>
+<text x="399.2" y="79.0">zgc</text>
+<text x="70" y="58" fill="#555">green = on the frontier, red ring = misses the SLO</text>
+</svg>

@@ -1,0 +1,73 @@
+{
+  "derived": {
+    "achieved_rps": 57.31111111111111,
+    "cpu_seconds_per_1k_requests": 2.591496823567375,
+    "error_rate": 0.0,
+    "throttled_fraction": 0.0,
+    "working_set_max_mib": 327.31640625
+  },
+  "gc_log": {
+    "collector": null,
+    "pause_count": 21,
+    "pause_max_ms": 18.731,
+    "pause_p99_ms": 18.731,
+    "pause_total_ms": 248.839
+  },
+  "k6": {
+    "checks_rate": 1,
+    "dropped_iterations": 0,
+    "failed_thresholds": [],
+    "has_measure_window": true,
+    "max_ms": 504.089292,
+    "p50_ms": 39.718229,
+    "p95_ms": 48.720935049999994,
+    "p999_ms": 201.50478448403214,
+    "p99_ms": 72.25040116
+  },
+  "meta": {
+    "branch": "main",
+    "git_sha": "488134b7b0e6bdc97a4fc62475db293a7457564c",
+    "hazelcast_node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "hazelcast_pod": "hazelcast-696447844-vmfnh",
+    "image_id": "us-central1-docker.pkg.dev/k8s-dev-412419/springboot-grpc-o2/job-manager-api@sha256:c24f35867b616393e752acc38ede4c3bb51597926424e3c5a546d3dc874ce9f8",
+    "jdk_java_options": "-Xlog:gc*:stdout:time,uptime,level,tags",
+    "jvm_gc_flags": "UseSerialGC",
+    "load": {
+      "duration": "3m",
+      "grpc_addr": "grpc.miqui.dev:443",
+      "k6_exit_code": 0,
+      "p99_limit_ms": null,
+      "rate": 8,
+      "script": "k6-job-lifecycle.js",
+      "source": "operator machine",
+      "warmup": "1m"
+    },
+    "node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "overlay": "experiments/gc/overlays/baseline",
+    "pod": "job-manager-api-77c98765d4-x59lk",
+    "startup_seconds": 14,
+    "timestamp": "20261007T035902Z"
+  },
+  "prometheus": {
+    "cpu_periods": 1400.1852797156523,
+    "cpu_seconds": 20.793018735938585,
+    "cpu_throttled_periods": 0.0,
+    "cpu_throttled_seconds": 0.0,
+    "gc_pause_count": 20.74074074074074,
+    "gc_pause_max_ms": 386.0,
+    "gc_pause_total_ms": 238.5185185185185,
+    "server_errors": 0.0,
+    "server_p999_ms": 32.41590909090988,
+    "server_p99_ms": 19.920663265306125,
+    "server_requests": 8023.555555555556,
+    "working_set_max_bytes": 343216128.0
+  },
+  "slo_pass": true,
+  "valid": true,
+  "variant": "baseline",
+  "window": {
+    "end": 1791345495.0,
+    "seconds": 140.0,
+    "start": 1791345355.0
+  }
+}
