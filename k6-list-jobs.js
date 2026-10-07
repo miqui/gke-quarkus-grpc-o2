@@ -1,17 +1,15 @@
 import { check, sleep } from 'k6';
 import { randomIntBetween } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
-import { createJob, grpc, JOBS, rpc } from './k6-common.js';
+import { createJob, grpc, JOBS, rpc, loadOptions } from './k6-common.js';
 
 // Reads: ListJobs (unfiltered, by state, by label - the GIN index), GetJob, ListJobEvents and
 // ListJobTypes against a small set of jobs created in setup.
-export const options = {
-  vus: __ENV.VUS ? parseInt(__ENV.VUS, 10) : 10,
-  duration: __ENV.DURATION || '10s',
+export const options = loadOptions({
   thresholds: {
     checks: ['rate>0.99'],
     grpc_req_duration: ['p(95)<500'],  // 95% of calls below 500ms
   },
-};
+});
 
 // Created once in setup and handed to every VU: module-level code runs once per VU, so a
 // Date.now()-based id there would differ between VUs.

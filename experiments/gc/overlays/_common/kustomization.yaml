@@ -1,0 +1,21 @@
+# Shared by every GC experiment overlay: one replica and no HPA, so autoscaling can't hide the GC
+# effect (experiments 1-3). Experiment 4 (fleet level) uses its own overlays that keep the HPA.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+replicas:
+  - name: job-manager-api
+    count: 1
+
+patches:
+  - target:
+      group: autoscaling
+      version: v2
+      kind: HorizontalPodAutoscaler
+      name: job-manager-api
+    patch: |-
+      $patch: delete
+      apiVersion: autoscaling/v2
+      kind: HorizontalPodAutoscaler
+      metadata:
+        name: job-manager-api

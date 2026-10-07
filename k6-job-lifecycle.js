@@ -1,6 +1,6 @@
 import { check, sleep } from 'k6';
 import { randomIntBetween } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
-import { attemptsOf, grpc, JOBS, rpc, versionOf, workerId, WORKERS } from './k6-common.js';
+import { attemptsOf, grpc, JOBS, rpc, versionOf, workerId, WORKERS, loadOptions } from './k6-common.js';
 
 // Every VU plays client and worker: create a job, claim one, heartbeat, then complete it (80%) or
 // fail it as retryable (20% - it is re-queued after a 5s backoff and claimed again later), read it
@@ -8,14 +8,12 @@ import { attemptsOf, grpc, JOBS, rpc, versionOf, workerId, WORKERS } from './k6-
 //
 // Claims take any ready demo.echo job, so a VU may well finish another VU's job - which is the
 // point: workers don't own jobs, leases do. Run it against an otherwise idle demo.echo queue.
-export const options = {
-  vus: __ENV.VUS ? parseInt(__ENV.VUS, 10) : 10,
-  duration: __ENV.DURATION || '10s',
+export const options = loadOptions({
   thresholds: {
     checks: ['rate>0.99'],
     grpc_req_duration: ['p(95)<500'],  // 95% of calls below 500ms
   },
-};
+});
 
 const WORKER = workerId('k6-lifecycle');
 
