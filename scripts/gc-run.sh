@@ -95,11 +95,22 @@ done
 RENDERED=$(kubectl kustomize "$OVERLAY") || die "kubectl kustomize $OVERLAY failed"
 EXPECTED_OPTS=$(printf '%s\n' "$RENDERED" | awk '/name: JDK_JAVA_OPTIONS/ { getline; sub(/^ *value: */, ""); gsub(/"/, ""); print; exit }')
 [[ -n "$EXPECTED_OPTS" ]] || die "$OVERLAY does not set JDK_JAVA_OPTIONS"
+# Overlays that differ only in memory (experiment 2) have the same JDK options, so the wait below must
+# also compare the memory limit, or it would see the previous run's pod as "already rolled out".
+EXPECTED_MEM=$(printf '%s\n' "$RENDERED" | python3 -I -c '
+import sys, yaml
+for d in yaml.safe_load_all(sys.stdin):
+    if d and d.get("kind") == "Deployment" and d["metadata"]["name"] == "job-manager-api":
+        for c in d["spec"]["template"]["spec"]["containers"]:
+            if c["name"] == "job-manager-api":
+                print(c["resources"]["limits"]["memory"])')
+[[ -n "$EXPECTED_MEM" ]] || die "could not read the memory limit from the rendered $OVERLAY"
 WINDOW_OFFSET=$(( WARMUP_S + MARGIN_S ))
 WINDOW_S=$(( DURATION_S - 2 * MARGIN_S ))
 
 echo "variant:        $VARIANT ($OVERLAY on $BRANCH)"
 echo "JDK options:    $EXPECTED_OPTS"
+echo "memory limit:   $EXPECTED_MEM"
 echo "load:           $K6_SCRIPT at ${RATE}/s against $GRPC_ADDR, warm-up $WARMUP, measure $DURATION"
 echo "SLO p99 limit:  ${P99_LIMIT_MS:-none}"
 echo "window:         measured seconds $WINDOW_OFFSET..$((WINDOW_OFFSET + WINDOW_S)) of the k6 run (${WINDOW_S}s)"
@@ -135,10 +146,10 @@ log "Waiting for the rollout of the overlay's settings"
 deadline=$(( $(date +%s) + ROLLOUT_TIMEOUT_S ))
 while :; do
   current=$(kubectl -n "$APP_NS" get deploy "$APP" -o json | jq -r --arg c "$APP" \
-    '[(.spec.replicas | tostring), ((.spec.template.spec.containers[] | select(.name == $c) | .env[]? | select(.name == "JDK_JAVA_OPTIONS") | .value) // "")] | join("|")')
+    '[(.spec.replicas | tostring), ((.spec.template.spec.containers[] | select(.name == $c) | .env[]? | select(.name == "JDK_JAVA_OPTIONS") | .value) // ""), (.spec.template.spec.containers[] | select(.name == $c) | .resources.limits.memory)] | join("|")')
   hpa=$(kubectl -n "$APP_NS" get hpa "$APP" -o name 2>/dev/null || true)
-  [[ "$current" == "1|$EXPECTED_OPTS" && -z "$hpa" ]] && break
-  (( $(date +%s) < deadline )) || die "timed out: deployment has '$current' (hpa: ${hpa:-none}), want '1|$EXPECTED_OPTS' - check the Application in Argo CD"
+  [[ "$current" == "1|$EXPECTED_OPTS|$EXPECTED_MEM" && -z "$hpa" ]] && break
+  (( $(date +%s) < deadline )) || die "timed out: deployment has '$current' (hpa: ${hpa:-none}), want '1|$EXPECTED_OPTS|$EXPECTED_MEM' - check the Application in Argo CD"
   sleep 10
 done
 if ! kubectl -n "$APP_NS" rollout status "deploy/$APP" --timeout="${READY_TIMEOUT_S:-300}s"; then
@@ -172,6 +183,8 @@ echo "pod: $POD"
 # ---- 3. what is really running ----------------------------------------------------------------
 POD_JSON=$(kubectl -n "$APP_NS" get pod "$POD" -o json)
 NODE=$(jq -r '.spec.nodeName' <<<"$POD_JSON")
+[[ "$(jq -r --arg c "$APP" '.spec.containers[] | select(.name == $c) | .resources.limits.memory' <<<"$POD_JSON")" == "$EXPECTED_MEM" ]] \
+  || die "pod $POD has a different memory limit than the overlay's $EXPECTED_MEM (a rollout was still in progress?)"
 IMAGE_ID=$(jq -r --arg c "$APP" '.status.containerStatuses[] | select(.name == $c) | .imageID' <<<"$POD_JSON")
 MEM_LIMIT=$(jq -r --arg c "$APP" '.spec.containers[] | select(.name == $c) | .resources.limits.memory' <<<"$POD_JSON")
 STARTUP_S=$(jq -r --arg c "$APP" '
