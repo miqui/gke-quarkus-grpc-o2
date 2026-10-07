@@ -1,0 +1,73 @@
+{
+  "derived": {
+    "achieved_rps": 72.31685651583237,
+    "cpu_seconds_per_1k_requests": 2.9568005400647905,
+    "error_rate": 0.0,
+    "throttled_fraction": 0.0,
+    "working_set_max_mib": 255.43359375
+  },
+  "gc_log": {
+    "collector": "2 workers of 2 for evacuation",
+    "pause_count": 273,
+    "pause_max_ms": 77.453,
+    "pause_p99_ms": 60.231,
+    "pause_total_ms": 3612.554
+  },
+  "k6": {
+    "checks_rate": 1,
+    "dropped_iterations": 0,
+    "failed_thresholds": [],
+    "has_measure_window": true,
+    "max_ms": 297.8525,
+    "p50_ms": 38.961354,
+    "p95_ms": 48.5548125,
+    "p999_ms": 110.8819541720007,
+    "p99_ms": 66.94562024999998
+  },
+  "meta": {
+    "branch": "main",
+    "git_sha": "488134b7b0e6bdc97a4fc62475db293a7457564c",
+    "hazelcast_node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "hazelcast_pod": "hazelcast-696447844-vmfnh",
+    "image_id": "us-central1-docker.pkg.dev/k8s-dev-412419/springboot-grpc-o2/job-manager-api@sha256:c24f35867b616393e752acc38ede4c3bb51597926424e3c5a546d3dc874ce9f8",
+    "jdk_java_options": "-XX:+UseG1GC -Xlog:gc*:stdout:time,uptime,level,tags",
+    "jvm_gc_flags": "UseG1GC",
+    "load": {
+      "duration": "10m",
+      "grpc_addr": "grpc.miqui.dev:443",
+      "k6_exit_code": 0,
+      "p99_limit_ms": 75,
+      "rate": 10,
+      "script": "k6-job-lifecycle.js",
+      "source": "operator machine",
+      "warmup": "2m"
+    },
+    "node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "overlay": "experiments/gc/overlays/g1",
+    "pod": "job-manager-api-5789f69b8f-24cdp",
+    "startup_seconds": 14,
+    "timestamp": "20261007T051248Z"
+  },
+  "prometheus": {
+    "cpu_periods": 5451.163972351321,
+    "cpu_seconds": 119.74285142500862,
+    "cpu_throttled_periods": 0.0,
+    "cpu_throttled_seconds": 0.0,
+    "gc_pause_count": 157.40483818076333,
+    "gc_pause_max_ms": 39.0,
+    "gc_pause_total_ms": 1741.5432737179326,
+    "server_errors": 0.0,
+    "server_p999_ms": 43.99710144927414,
+    "server_p99_ms": 21.68785529715761,
+    "server_requests": 40497.43964886613,
+    "working_set_max_bytes": 267841536.0
+  },
+  "slo_pass": true,
+  "valid": true,
+  "variant": "g1",
+  "window": {
+    "end": 1791349921.0,
+    "seconds": 560.0,
+    "start": 1791349361.0
+  }
+}
