@@ -161,8 +161,9 @@ comparison. Instead, all variants live side by side on a single branch (`exp/gc-
 merges through a PR like any other work:
 
 ```
-k8s/experiments/gc/
-  baseline/            # main's settings; one replica and no HPA to match variants
+experiments/gc/overlays/
+  _common/             # Component: one replica, HPA removed
+  baseline/            # main's settings plus the GC log; one replica and no HPA to match variants
   serial-explicit/
   parallel/
   g1/
@@ -170,12 +171,13 @@ k8s/experiments/gc/
   shenandoah/
   mem-512-p75/ ...     # experiment 2 sweep points
   native-serial/ ...   # experiment 8: different image, see "Native mode" below
-experiments/gc/results/<variant>-<timestamp>.json
-scripts/gc-run.sh
-scripts/gc-frontier.py
+experiments/gc/queries.json
+experiments/gc/results/<variant>-<timestamp>.json    # raw k6 summary and GC log in results/raw/
+scripts/gc-run.sh, gc-sweep.sh, gc-collect.py, gc-frontier.py
 ```
 
-Each overlay uses `../../..` (the `k8s/` base) as its resource and patches only:
+The overlays sit outside `k8s/` because Kustomize rejects an overlay nested under the base it
+extends ("cycle detected"). Each overlay uses `../../../../k8s` as its resource and patches only:
 
 - **`JDK_JAVA_OPTIONS`** in the `env:` of the `job-manager-api` container, e.g.
   `-XX:+UseZGC -XX:+ZGenerational -Xlog:gc*:stdout:time,uptime,level,tags`. The image's entrypoint
@@ -200,11 +202,11 @@ overlay touches it.
 ### Run script (`scripts/gc-run.sh <variant>`)
 
 1. Point the `job-manager-api` Application's `spec.source.targetRevision` at the experiment branch
-   (`exp/gc-pareto`) and its `spec.source.path` at `k8s/experiments/gc/<variant>`. The Application
+   (`exp/gc-pareto`) and its `spec.source.path` at `experiments/gc/overlays/<variant>`. The Application
    tracks `main` and `path: k8s`, where the overlays don't exist, so the path alone is not enough.
-2. Reset the data: truncate the jobs tables (or restore a fixed seed) so each run starts against
-   the same table sizes. Lifecycle and create runs add rows, and without a reset later variants run
-   against a bigger table.
+2. Reset the data so each run starts against the same table sizes. Lifecycle and create runs add
+   rows, and without a reset later variants run against a bigger table. Cloud SQL is private-IP
+   only, so `k6-reset-jobs.js` deletes every job through the API instead of truncating tables.
 3. Wait for the rollout and for readiness, and record the startup time measured from the main
    container's start (the two init containers wait for Cloud SQL and Hazelcast, and that wait has
    nothing to do with the variant).
@@ -231,12 +233,12 @@ and plots it, with the baseline highlighted.
 - **Argo CD self-heal:** the root Application (`k8s/argocd/root-application.yaml`) self-heals its
   child Applications and only ignores `/spec/source/kustomize`. It would therefore revert a change
   to `/spec/source/path`. The root Application tracks `main`, so an `ignoreDifferences` edit on the
-  experiment branch has no effect. Either add `/spec/source/path` (and `/spec/source/targetRevision`)
-  to the root Application's `ignoreDifferences` on `main`, or turn off auto-sync on the root app for
-  the duration of a sweep.
+  experiment branch has no effect. `gc-run.sh` turns off auto-sync on the root app for the duration
+  of a sweep (no change on `main` needed) and `gc-run.sh --restore` turns it back on.
 - **Fixed load source:** run k6 from the same machine and network each time, or better, as an
   in-cluster Job, so the public Gateway (`grpc.miqui.dev`) and home network don't add noise to p99.
-  The k6 scripts currently use `vus`/`duration`; they need a `constant-arrival-rate` option first.
+  The k6 scripts take `RATE` for a constant arrival rate with a warm-up; `gc-run.sh` currently runs k6
+  from the operator's machine, so an in-cluster Job is still to do.
 - **Cloud SQL is shared and external.** Every call does JDBC against Cloud SQL (pool max 10,
   `DB_POOL_MAX`). Record database latency for each run so a slow database isn't blamed on the GC,
   and keep the pool size fixed across variants.
@@ -278,9 +280,9 @@ operations (create, get, list), not overall numbers.
 ## Next steps
 
 1. Tag `main` as `gc-baseline-v1`, verify the implicit SerialGC on a running pod.
-2. Add a `constant-arrival-rate` option to the k6 scripts (`k6-common.js`) and a data-reset step.
-3. On `exp/gc-pareto`: the overlays for experiment 1 and `gc-run.sh`. On `main`: the root-app
-   `ignoreDifferences` change.
+2. Done on `exp/gc-pareto`: the `RATE` option in the k6 scripts and the data-reset script.
+3. Done on `exp/gc-pareto`: the overlays for experiment 1 and the run, sweep, collect and frontier
+   scripts (`experiments/gc/README.md`). Their cluster-facing parts are unverified until the first run.
 4. Calibrate the baseline (see "Goal and decisions"): find the arrival rate, run it 3 times, and
    record the rate and the p99 limit. Agree on the load scenario and durations at the same time.
 5. Run experiment 1, then experiment 2. Write up the frontiers here or in a results document.
