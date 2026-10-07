@@ -65,6 +65,10 @@ restore() {
     -p '{"spec":{"source":{"targetRevision":"main","path":"k8s"}}}'
   kubectl -n "$ARGO_NS" patch application "$ROOT_APP" --type merge \
     -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'
+  # Image Updater's own Application self-heals (it would scale the controller back up mid-run), so
+  # pausing it takes its auto-sync off; turning that back on also brings the controller back to 1.
+  kubectl -n "$ARGO_NS" patch application argocd-image-updater --type merge \
+    -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'
   kubectl -n "$ARGO_NS" annotate application "$APP" argocd.argoproj.io/refresh=hard --overwrite
   echo "root auto-sync restored; $APP tracks main/k8s again (3 replicas + HPA return)"
 }
@@ -112,7 +116,9 @@ if [[ "${ALLOW_IMAGE_UPDATER:-0}" != "1" ]]; then
   running=$(kubectl -n "$ARGO_NS" get deploy -o json \
     | jq -r '.items[] | select(.metadata.name | test("image-updater")) | select((.status.readyReplicas // 0) > 0) | .metadata.name')
   [[ -z "$running" ]] || die "Argo CD Image Updater is running ($running); pause it so a new build can't roll out mid-run:
-  kubectl -n $ARGO_NS scale deploy/$running --replicas=0   (scale back to 1 after the sweep)
+  kubectl -n $ARGO_NS patch application argocd-image-updater --type merge -p '{\"spec\":{\"syncPolicy\":{\"automated\":null}}}'
+  kubectl -n $ARGO_NS scale deploy/$running --replicas=0
+(its Application self-heals, so the patch must come first; '$0 --restore' undoes both)
 or set ALLOW_IMAGE_UPDATER=1"
 fi
 
