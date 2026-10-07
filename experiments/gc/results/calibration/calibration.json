@@ -1,0 +1,31 @@
+{
+  "target_cpu_millicores": 175,
+  "why": "70% of the 250m CPU request: where the HPA would add a replica",
+  "script": "k6-job-lifecycle.js",
+  "points": [
+    {
+      "rate": 8,
+      "cpu_millicores": 149,
+      "k6_p99_ms": 72.3,
+      "server_p99_ms": 19.9,
+      "file": "baseline-20261007T035902Z.json"
+    },
+    {
+      "rate": 12,
+      "cpu_millicores": 213,
+      "k6_p99_ms": 78.8,
+      "server_p99_ms": 22.9,
+      "file": "baseline-20261007T035339Z.json"
+    },
+    {
+      "rate": 20,
+      "cpu_millicores": 371,
+      "k6_p99_ms": 91.8,
+      "server_p99_ms": 23.1,
+      "file": "baseline-20261007T034618Z.json"
+    }
+  ],
+  "chosen_rate": 10,
+  "expected_cpu_millicores": 181,
+  "note": "linear interpolation between rate 8 (149m) and 12 (213m); short runs (1m warm-up, 3m window)"
+}

@@ -1,0 +1,7 @@
+variant     runs  prometheus.server_p99_ms  derived.cpu_seconds_per_1k_requests  SLO   frontier
+parallel    3     18.365 (17.746-21.686)    2.677 (2.616-2.836)                  pass  yes
+baseline    6     18.843 (14.739-21.789)    2.579 (2.399-3.061)                  pass  yes
+shenandoah  3     20.895 (19.592-21.579)    3.185 (3.166-3.540)                  pass  -
+g1          3     21.392 (20.573-21.688)    3.005 (2.957-3.027)                  pass  -
+zgc         3     21.419 (20.939-21.927)    3.227 (3.155-3.244)                  pass  -
+wrote experiments/gc/results/frontier-serverp99.svg

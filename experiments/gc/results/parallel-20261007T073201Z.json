@@ -1,0 +1,73 @@
+{
+  "derived": {
+    "achieved_rps": 72.21801801801801,
+    "cpu_seconds_per_1k_requests": 2.6160959446708603,
+    "error_rate": 0.0,
+    "throttled_fraction": 0.0,
+    "working_set_max_mib": 293.86328125
+  },
+  "gc_log": {
+    "collector": null,
+    "pause_count": 228,
+    "pause_max_ms": 182.031,
+    "pause_p99_ms": 11.956,
+    "pause_total_ms": 1471.429
+  },
+  "k6": {
+    "checks_rate": 1,
+    "dropped_iterations": 0,
+    "failed_thresholds": [],
+    "has_measure_window": true,
+    "max_ms": 307.731917,
+    "p50_ms": 38.6347915,
+    "p95_ms": 45.63514114999999,
+    "p999_ms": 101.08355243400038,
+    "p99_ms": 58.64313909
+  },
+  "meta": {
+    "branch": "main",
+    "git_sha": "488134b7b0e6bdc97a4fc62475db293a7457564c",
+    "hazelcast_node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "hazelcast_pod": "hazelcast-696447844-vmfnh",
+    "image_id": "us-central1-docker.pkg.dev/k8s-dev-412419/springboot-grpc-o2/job-manager-api@sha256:c24f35867b616393e752acc38ede4c3bb51597926424e3c5a546d3dc874ce9f8",
+    "jdk_java_options": "-XX:+UseParallelGC -Xlog:gc*:stdout:time,uptime,level,tags",
+    "jvm_gc_flags": "UseParallelGC",
+    "load": {
+      "duration": "10m",
+      "grpc_addr": "grpc.miqui.dev:443",
+      "k6_exit_code": 0,
+      "p99_limit_ms": 75,
+      "rate": 10,
+      "script": "k6-job-lifecycle.js",
+      "source": "operator machine",
+      "warmup": "2m"
+    },
+    "node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "overlay": "experiments/gc/overlays/parallel",
+    "pod": "job-manager-api-6f5d994c9d-6lskb",
+    "startup_seconds": 13,
+    "timestamp": "20261007T073201Z"
+  },
+  "prometheus": {
+    "cpu_periods": 5600.031048037598,
+    "cpu_seconds": 105.80038787869827,
+    "cpu_throttled_periods": 0.0,
+    "cpu_throttled_seconds": 0.0,
+    "gc_pause_count": 225.009009009009,
+    "gc_pause_max_ms": 201.0,
+    "gc_pause_total_ms": 1238.054054054054,
+    "server_errors": 0.0,
+    "server_p999_ms": 24.746164294954838,
+    "server_p99_ms": 17.746248382923785,
+    "server_requests": 40442.09009009009,
+    "working_set_max_bytes": 308137984.0
+  },
+  "slo_pass": true,
+  "valid": true,
+  "variant": "parallel",
+  "window": {
+    "end": 1791358274.0,
+    "seconds": 560.0,
+    "start": 1791357714.0
+  }
+}

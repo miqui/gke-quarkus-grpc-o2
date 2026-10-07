@@ -1,0 +1,170 @@
+{
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "create: status is OK": {
+                    "name": "create: status is OK",
+                    "path": "::create: status is OK",
+                    "id": "2a0c02d256505c2efb8bc41abf8cd1d5",
+                    "passes": 7182,
+                    "fails": 0
+                },
+                "claim: status is OK": {
+                    "name": "claim: status is OK",
+                    "path": "::claim: status is OK",
+                    "id": "519a234f210d444521a76677234a2628",
+                    "passes": 7182,
+                    "fails": 0
+                },
+                "claim: job is running": {
+                    "id": "f23013a55a35fc132d3d35a1345e6d58",
+                    "passes": 7182,
+                    "fails": 0,
+                    "name": "claim: job is running",
+                    "path": "::claim: job is running"
+                },
+                "claim: leased to this worker": {
+                    "fails": 0,
+                    "name": "claim: leased to this worker",
+                    "path": "::claim: leased to this worker",
+                    "id": "e7647bdc6c72e257820d52b4134e791f",
+                    "passes": 7182
+                },
+                "heartbeat: status is OK": {
+                    "name": "heartbeat: status is OK",
+                    "path": "::heartbeat: status is OK",
+                    "id": "c4642464c56a1e7966230d68b13a92ed",
+                    "passes": 7182,
+                    "fails": 0
+                },
+                "heartbeat: version unchanged": {
+                    "id": "e652f30203060c8cf2148a85d3776c36",
+                    "passes": 7182,
+                    "fails": 0,
+                    "name": "heartbeat: version unchanged",
+                    "path": "::heartbeat: version unchanged"
+                },
+                "complete: succeeded": {
+                    "name": "complete: succeeded",
+                    "path": "::complete: succeeded",
+                    "id": "c83f1ff627b6ec650b3db93d68d8e3e8",
+                    "passes": 5721,
+                    "fails": 0
+                },
+                "read: succeeded": {
+                    "path": "::read: succeeded",
+                    "id": "4073ea8f130cf0014dfc005554e86398",
+                    "passes": 11442,
+                    "fails": 0,
+                    "name": "read: succeeded"
+                },
+                "events: created, claimed, completed": {
+                    "passes": 5721,
+                    "fails": 0,
+                    "name": "events: created, claimed, completed",
+                    "path": "::events: created, claimed, completed",
+                    "id": "85129bf239b596113c0ada19aa08f25a"
+                },
+                "delete: status is OK": {
+                    "id": "316d39be06bde618ddaadd9264f93405",
+                    "passes": 5721,
+                    "fails": 0,
+                    "name": "delete: status is OK",
+                    "path": "::delete: status is OK"
+                },
+                "fail: status is OK": {
+                    "passes": 1461,
+                    "fails": 0,
+                    "name": "fail: status is OK",
+                    "path": "::fail: status is OK",
+                    "id": "08daad1055c3d92aa0ac9bc12431a4ea"
+                },
+                "fail: re-queued or out of attempts": {
+                    "name": "fail: re-queued or out of attempts",
+                    "path": "::fail: re-queued or out of attempts",
+                    "id": "f56824df3aca9f4fa9eec23ae3d43bab",
+                    "passes": 1461,
+                    "fails": 0
+                }
+            },
+        "name": "",
+        "path": ""
+    },
+    "metrics": {
+        "grpc_req_duration": {
+            "p(99.9)": 130.34313525001474,
+            "max": 753.429542,
+            "avg": 40.06481853733601,
+            "med": 38.9323125,
+            "p(90)": 44.195699700000006,
+            "p(95)": 47.745420499999994,
+            "p(99)": 66.61444011999995,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "vus_max": {
+            "min": 100,
+            "max": 100,
+            "value": 100
+        },
+        "dropped_iterations{scenario:measure}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<1": false
+            }
+        },
+        "dropped_iterations": {
+            "count": 0,
+            "rate": 0
+        },
+        "data_received": {
+            "count": 22807782,
+            "rate": 31650.533318734833
+        },
+        "iteration_duration": {
+            "med": 503.5165205,
+            "p(90)": 623.6644625,
+            "p(95)": 639.213175,
+            "p(99)": 747.3509115799999,
+            "p(99.9)": 10000.877399750001,
+            "max": 10001.84225,
+            "avg": 519.0034325823382
+        },
+        "vus": {
+            "value": 6,
+            "min": 2,
+            "max": 26
+        },
+        "checks": {
+            "fails": 0,
+            "passes": 74619,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "grpc_req_duration{scenario:measure}": {
+            "p(99.9)": 134.9479882840046,
+            "max": 753.429542,
+            "avg": 40.13469464974906,
+            "med": 38.942854,
+            "p(90)": 44.293974999999996,
+            "p(95)": 47.9960769,
+            "p(99)": 67.80474526,
+            "thresholds": {
+                "max>=0": false
+            }
+        },
+        "data_sent": {
+            "count": 10188129,
+            "rate": 14138.14444429838
+        },
+        "iterations": {
+            "rate": 9.994270418821447,
+            "count": 7202
+        }
+    }
+}

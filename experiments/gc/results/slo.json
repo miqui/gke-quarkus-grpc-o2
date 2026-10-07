@@ -1,0 +1,16 @@
+{
+  "rule": "p99 <= 1.10 x median baseline k6 p99, at the calibrated rate",
+  "rate": 10,
+  "baseline_p99_ms": [
+    71.01330435,
+    63.96251574999998,
+    67.80474526
+  ],
+  "median_ms": 67.80474526,
+  "p99_limit_ms": 75,
+  "server_p99_ms_baseline": [
+    17.32123893805312,
+    14.738661710037105,
+    15.435398981324337
+  ]
+}
