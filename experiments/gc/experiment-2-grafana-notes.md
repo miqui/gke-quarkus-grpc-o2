@@ -1,7 +1,7 @@
 # Experiment 2 (memory-limit sweep): Grafana observations during repeat 1
 
-Taken 2026-10-07 at about 14:05 EDT, while repeat 1 of the reduced sweep was running (serial-384 in
-progress). Time range 13:00 EDT to now. Charts were captured from the cluster's Grafana through a
+Taken 2026-10-07 at about 14:05 EDT, during repeat 1 of the reduced sweep (the screenshots named
+`exp2-pass1-*`). Repeat 2 screenshots are named after the run's result file, plus two overviews. Time range 13:00 EDT to now. Charts were captured from the cluster's Grafana through a
 port-forward, from the "job-manager-api API" and "API RED & Saturation" dashboards.
 
 Plan: `pareto-frontier.md` (experiment 2). Results so far: `experiments/gc/results/mem-*.json`.
@@ -24,8 +24,8 @@ and its own line in the per-pod panels.
 | 13:07-13:21 | parallel-384 | `bcf4457d` |
 | 13:21-13:24 | gap: Image Updater had come back, so 3 runs failed their pre-run check and the cluster returned to main (3 replicas + HPA, the `6865977bf7` pods) | |
 | 13:24-13:38 | parallel-512 | `5f85b4f9d` |
-| 13:38-13:54 | serial-512 | `6cf5f88464` |
-| 13:54- | serial-384 | `5b74754b76` |
+| 13:38-13:54 | serial-512 | `5b74754b76` |
+| 13:54-14:08 | serial-384: lost, see below | `6cf5f88464` replaced `5b74754b76` mid-warm-up |
 
 ## Results of repeat 1 (one run per point; 75 ms k6 p99 limit)
 
@@ -34,7 +34,7 @@ and its own line in the per-pod panels.
 | parallel-384 | 80.2 ms | 19.3 ms | 2.61 | 275 MiB | 314 ms | cx1n | fail |
 | parallel-512 | 92.6 ms | 24.4 ms | 3.38 | 274 MiB | 328 ms | q29m | fail |
 | serial-512 | 76.1 ms | 20.9 ms | 2.70 | 270 MiB | 22 ms | cx1n | fail |
-| serial-384 | in progress | | | | | | |
+| serial-384 | lost (harness bug, see below) | | | | | | |
 
 The 768Mi points are the experiment 1 runs (MaxRAMPercentage is 75 there too): Serial 62.9 ms and
 Parallel 58.6 ms median k6 p99.
@@ -71,3 +71,41 @@ Parallel 58.6 ms median k6 p99.
   OOM kill.
 - The dashboards have no marker for run boundaries or variant names. Use the pod hash table above, or
   the `meta.timestamp` in each result file.
+
+## The lost run (serial-384, repeat 1)
+
+serial-384 and serial-512 differ only in the memory limit, so their `JDK_JAVA_OPTIONS` are identical.
+`gc-run.sh` waited for the rollout by comparing the flags only, decided the cluster was already
+on the new settings, and started k6 against the old 512Mi pod. Argo CD then replaced the pod during the
+warm-up, the harness lost its pod, and no result was written. `gc-run.sh` now waits for the memory limit
+too and checks the pod's limit (commit `94e888d`). The three completed repeat 1 results are sound: each
+followed a run with different flags, or a restore to main.
+
+## Repeat 2 (pinned to node `cx1n`)
+
+Same points, shuffled, with `nodeSelector` on `cx1n`. Run 14:11-15:14 EDT.
+
+| Point | Repeat 1 (unpinned) k6 p99 | Repeat 2 (pinned) k6 p99 | Repeat 2 server p99 | Repeat 2 CPU-s / 1k | Repeat 2 working set | Repeat 2 SLO |
+| --- | --- | --- | --- | --- | --- | --- |
+| serial-384 | lost | 75.2 ms | 21.1 ms | 2.69 | 270 MiB | fail (by 0.2 ms) |
+| serial-512 | 76.1 ms (`cx1n`) | 78.6 ms | 20.8 ms | 2.70 | 270 MiB | fail |
+| parallel-384 | 80.2 ms (`cx1n`) | 70.0 ms | 20.4 ms | 2.68 | 286 MiB | pass |
+| parallel-512 | 92.6 ms (`q29m`) | 68.6 ms | 21.8 ms | 2.67 | 289 MiB | pass |
+
+What it shows:
+
+- **The node was the cause of the bad parallel-512 run.** On `cx1n` it went from 92.6 to 68.6 ms p99 and
+  from 3.38 to 2.67 CPU-s per 1k requests.
+- **Memory is not the constraint down to 384Mi.** The working set stays at 270-289 MiB, no restarts. The
+  p99 differences between 384 and 512Mi are within run-to-run noise.
+- **Parallel is 5-10 ms better than Serial on k6 p99 at both sizes** (it passes the 75 ms limit, Serial
+  does not), but the server-side p99 is the same (about 20-22 ms) and CPU cost is the same (about 2.7).
+  Serial's 75-79 ms is just over the limit. Both are one or two runs per point, so this is indicative.
+- Parallel's maximum GC pause is longer (about 310-330 ms in repeat 1) than Serial's (about 22 ms), and it
+  does not show in p99.
+- The smallest pod that meets the SLO so far is 384Mi (Parallel). Where it breaks is not yet known.
+
+Screenshots: `exp2-mem-<point>-<timestamp>-job-manager-api.png` and `-api-red.png` for each finished
+run (both repeats where captured), and `exp2-overview-both-repeats-*.png` for 13:00-15:15. The overview
+shows 8 load blocks, one per run, p99 and request rate steady, no errors, no restarts, and the
+Container Memory vs Limit step-downs (768 to 512 to 384Mi) between runs.
