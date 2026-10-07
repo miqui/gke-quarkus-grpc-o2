@@ -1,0 +1,15 @@
+{
+  "_comment": "PromQL for one measurement window. {W} is the window length (e.g. 480s) and the query is evaluated as an instant query at the window's end. Names come from the Grafana dashboards in k8s/observability/ and are unverified against a live cluster until the first run; fix them here, not in gc-run.sh. Pod selectors: cAdvisor series use pod=, the OTLP-pushed series use k8s_pod_name=.",
+  "cpu_seconds": "sum(increase(container_cpu_usage_seconds_total{namespace=\"default\",container=\"job-manager-api\"}[{W}]))",
+  "cpu_throttled_seconds": "sum(increase(container_cpu_cfs_throttled_seconds_total{namespace=\"default\",container=\"job-manager-api\"}[{W}]))",
+  "cpu_throttled_periods": "sum(increase(container_cpu_cfs_throttled_periods_total{namespace=\"default\",container=\"job-manager-api\"}[{W}]))",
+  "cpu_periods": "sum(increase(container_cpu_cfs_periods_total{namespace=\"default\",container=\"job-manager-api\"}[{W}]))",
+  "working_set_max_bytes": "max(max_over_time(container_memory_working_set_bytes{namespace=\"default\",container=\"job-manager-api\"}[{W}]))",
+  "server_requests": "sum(increase(grpc_server_milliseconds_count{service_name=\"job-manager-api\"}[{W}]))",
+  "server_errors": "sum(increase(grpc_errors_total{service_name=\"job-manager-api\"}[{W}]))",
+  "server_p99_ms": "histogram_quantile(0.99, sum by (le) (increase(grpc_server_milliseconds_bucket{service_name=\"job-manager-api\"}[{W}])))",
+  "server_p999_ms": "histogram_quantile(0.999, sum by (le) (increase(grpc_server_milliseconds_bucket{service_name=\"job-manager-api\"}[{W}])))",
+  "gc_pause_total_ms": "sum(increase(jvm_gc_pause_milliseconds_sum{service_name=\"job-manager-api\"}[{W}]))",
+  "gc_pause_count": "sum(increase(jvm_gc_pause_milliseconds_count{service_name=\"job-manager-api\"}[{W}]))",
+  "gc_pause_max_ms": "max(max_over_time(jvm_gc_pause_milliseconds_max{service_name=\"job-manager-api\"}[{W}]))"
+}
