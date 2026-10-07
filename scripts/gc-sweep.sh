@@ -23,6 +23,9 @@ echo "run order:" $order
 if [[ "${KEEP:-0}" != "1" && "${DRY_RUN:-0}" != "1" ]]; then
   trap 'scripts/gc-run.sh --restore' EXIT
 fi
+failed=""
 for variant in $order; do
-  scripts/gc-run.sh "$variant"
+  # one failed run must not end an unattended sweep; the failures are listed at the end
+  scripts/gc-run.sh "$variant" || { echo "RUN FAILED: $variant" >&2; failed="$failed $variant"; }
 done
+[[ -z "$failed" ]] || { echo "failed runs:$failed" >&2; exit 1; }

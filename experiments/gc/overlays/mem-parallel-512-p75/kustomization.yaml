@@ -1,0 +1,34 @@
+# Experiment 2 point: parallel collector, 512Mi memory limit (request = limit), MaxRAMPercentage=75.
+# Same as the experiment 1 parallel overlay except for the memory. CPU request/limit stay 250m/1500m. The 768Mi point is
+# the experiment 1 result for this collector (MaxRAMPercentage is 75 there too).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../../k8s
+
+components:
+  - ../_common
+
+patches:
+  - target:
+      kind: Deployment
+      name: job-manager-api
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: job-manager-api
+      spec:
+        template:
+          spec:
+            containers:
+              - name: job-manager-api
+                resources:
+                  requests:
+                    memory: "512Mi"
+                  limits:
+                    memory: "512Mi"
+                env:
+                  - name: JDK_JAVA_OPTIONS
+                    value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75 -Xlog:gc*:stdout:time,uptime,level,tags"
