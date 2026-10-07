@@ -27,9 +27,9 @@ def summary(p99=250.0, thresholds=None, dropped=0):
 
 G1_LOG = "\n".join([
     '{"timestamp":"2026-10-06T10:00:05Z","message":"app log, not a GC line"}',
-    "[2026-10-06T09:59:00.000+0000][1.0s][info][gc] Using G1",
+    "[2026-10-06T09:59:00.000+0000][1.0s][info][gc     ] Using G1",
     "[2026-10-06T09:59:30.000+0000][30.0s][info][gc] GC(1) Pause Young (Normal) (G1 Evacuation Pause) 20M->5M(64M) 99.000ms",
-    "[2026-10-06T10:00:10.000+0000][70.0s][info][gc] GC(2) Pause Young (Normal) (G1 Evacuation Pause) 25M->6M(64M) 3.000ms",
+    "[2026-10-06T10:00:10.000+0000][70.0s][info][gc     ] GC(2) Pause Young (Normal) (G1 Evacuation Pause) 25M->6M(64M) 3.000ms",  # the JVM pads the tag to 7 characters
     "[2026-10-06T10:00:20.000+0000][80.0s][info][gc,phases] GC(3) Pause Cleanup 1.000ms",
     "[2026-10-06T10:00:20.000+0000][80.0s][info][gc] GC(3) Pause Cleanup 1.000ms",
     "[2026-10-06T10:00:30.000+0000][90.0s][info][gc,heap] GC(3) Eden regions: 1->0(2)",
