@@ -11,6 +11,33 @@ Adapted from the Spring Boot service's plan
 The method, the experiment backlog and the comparability rules carry over. Names, files, workload
 and metrics are this repo's, and the native-mode material is new.
 
+## Goal and decisions
+
+**Goal: pick the production GC configuration for `job-manager-api`.** Reusing the harness for other
+services is a possible follow-up, not a requirement, so the overlays and `gc-run.sh` may hard-code
+this service's names and paths.
+
+**Cost axis: CPU-seconds per 1k requests.** The HPA scales on CPU at 70% of a 250m request, and
+anti-affinity puts one service pod on each node, so GC CPU turns into replicas and then into nodes.
+Memory is a fit constraint, not a cost axis: no OOM kills, a working set below 80% of the limit,
+and a limit that fits the namespace quota. Experiment 2 reports it as "the smallest limit that
+meets the SLO".
+
+**SLO: derived from the baseline, fixed before experiment 1.** No production target exists yet, so
+the SLO means "no regression against today's configuration":
+
+1. Calibrate the load: on the baseline overlay (1 replica, no HPA), find the arrival rate at which
+   the pod uses about 175m CPU (70% of the 250m request, the point where the HPA would add a
+   replica).
+2. Measure the baseline 3 times at that rate. Take the median p99 of the 3 runs.
+3. The SLO is: p99 at most **1.10 x that baseline median**, error rate under 1%, at the same
+   arrival rate, judged on the median of 3 runs per variant.
+4. Write the calibrated rate and the resulting p99 limit into the first results file and do not
+   change them afterwards.
+
+Limitation: this SLO only says a variant is no worse than today. If a real latency target appears
+later, re-judge the existing results against it rather than re-running them.
+
 ## Why this service is a good test bed
 
 - **The current GC is implicit.** No GC flag is set anywhere. The only JVM options are
@@ -62,8 +89,20 @@ Notes on the metrics in this repo:
 
 ## Experiment backlog
 
-Ordered cheap to ambitious. **Experiments 1 and 2 come first.** 1-7 are the original GC plan;
-8-10 are Quarkus-specific.
+Listed cheap to ambitious. 1-7 are the original GC plan; 8-10 are Quarkus-specific.
+
+**Run order for the production-GC goal:**
+
+| Step | Experiment | Note |
+| --- | --- | --- |
+| 1 | 1 Collector shootout | After the baseline calibration in "Goal and decisions" |
+| 2 | 2 Memory-limit sweep | Top 2-3 collectors from step 1 only |
+| 3 | 6 Workload sensitivity | Finalists under read-heavy and write-heavy load |
+| 4 | 3 CPU limit sweep | Only if a concurrent collector is still a finalist, or the CPU limits may change |
+| 5 | 4 Fleet-level frontier | Confirms the finalist with the HPA on |
+| 6 | 5 Collector knobs | Only if the winner misses the SLO |
+| optional | 9 Startup caches, 10 JDK 21 vs 25 | 9 matters if HPA scale-up speed does; 10 only if a JDK bump is planned |
+| later | 8 Native, 7 Automated search | Large build work; only if footprint or startup becomes the goal, or a reusable harness is wanted |
 
 1. **Collector shootout** at fixed resources (768Mi, 250m/1500m): Serial (implicit and explicit),
    Parallel, G1, generational ZGC (`-XX:+UseZGC -XX:+ZGenerational` on JDK 21), Shenandoah.
@@ -138,7 +177,7 @@ scripts/gc-frontier.py
 
 Each overlay uses `../../..` (the `k8s/` base) as its resource and patches only:
 
-- **`JDK_JAVA_OPTIONS`** on the `job-manager-api` container (or in `job-manager-api-config`), e.g.
+- **`JDK_JAVA_OPTIONS`** in the `env:` of the `job-manager-api` container, e.g.
   `-XX:+UseZGC -XX:+ZGenerational -Xlog:gc*:stdout:time,uptime,level,tags`. The image's entrypoint
   is a plain `java -jar /app/quarkus-run.jar` (not Quarkus' `run-java.sh` image, so not
   `JAVA_OPTS_APPEND`), and the `java` launcher reads `JDK_JAVA_OPTIONS` in addition to the
@@ -149,6 +188,11 @@ Each overlay uses `../../..` (the `k8s/` base) as its resource and patches only:
 - **`resources`** of the `job-manager-api` container, for the memory and CPU sweeps.
 - For experiments 1-3: **`replicas: 1`** and the HPA removed, so autoscaling doesn't hide the GC
   effect.
+
+Set the flags in the container's `env:`, not in `job-manager-api-config`. That ConfigMap is a plain
+resource (no `configMapGenerator` hash suffix, no reloader) loaded with `envFrom`, so editing it
+syncs in Argo CD but does not restart the pods, and the run would measure the previous flags. A
+change to the pod template's `env:` forces a rollout.
 
 Hazelcast (`k8s/hazelcast-deployment.yaml`) is a separate JVM pod and is **not** under test: no
 overlay touches it.
@@ -237,8 +281,8 @@ operations (create, get, list), not overall numbers.
 2. Add a `constant-arrival-rate` option to the k6 scripts (`k6-common.js`) and a data-reset step.
 3. On `exp/gc-pareto`: the overlays for experiment 1 and `gc-run.sh`. On `main`: the root-app
    `ignoreDifferences` change.
-4. Agree on the fixed load profile (scenario, arrival rate, durations) and the SLO used to judge
-   experiment 2.
+4. Calibrate the baseline (see "Goal and decisions"): find the arrival rate, run it 3 times, and
+   record the rate and the p99 limit. Agree on the load scenario and durations at the same time.
 5. Run experiment 1, then experiment 2. Write up the frontiers here or in a results document.
 6. In parallel: a native-build spike (Hazelcast client first, since it decides whether experiment 8
    is cheap or expensive), and the AppCDS build option for experiment 9.
