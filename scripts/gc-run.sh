@@ -10,7 +10,7 @@
 #   1. points the job-manager-api Argo CD Application at the overlay on $BRANCH (the root app's
 #      auto-sync is paused first, or its self-heal would put the Application back; `--restore` undoes it)
 #   2. waits until the pod runs the overlay's JDK_JAVA_OPTIONS with one replica and no HPA, and checks
-#      the JVM really selected the collector (the "Using ..." line of its GC log)
+#      the JVM really selected the collector (PrintFlagsFinal in the pod)
 #   3. resets the data (k6-reset-jobs.js deletes every job), warms up, measures with a fixed arrival rate
 #   4. reads Prometheus for the measured window and writes experiments/gc/results/<variant>-<ts>.json
 #
@@ -162,26 +162,38 @@ STARTUP_S=$(jq -r --arg c "$APP" '
   | (($ready | fromdateiso8601) - ($started | fromdateiso8601))' <<<"$POD_JSON")
 HZ_POD=$(kubectl -n "$APP_NS" get pods -l app=hazelcast -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
 HZ_NODE=$(kubectl -n "$APP_NS" get pods -l app=hazelcast -o jsonpath='{.items[0].spec.nodeName}' 2>/dev/null || true)
-# The JRE image has no jcmd; the GC log the overlays switch on says which collector the JVM chose
-# ("[gc] Using G1"). An overlay without a collector flag (baseline) is expected to get SerialGC.
+# The JRE image has no jcmd, and the kubelet rotates container logs, so a long-lived pod no longer
+# has the "Using <collector>" line from its start. Ask a second JVM in the same container (same
+# environment, same cgroup, so the same ergonomics) which collector it ends up with. An overlay
+# without a collector flag (baseline) is expected to get SerialGC.
 case "$EXPECTED_OPTS" in
-  *UseSerialGC*) WANT_GC="Serial" ;;
-  *UseParallelGC*) WANT_GC="Parallel" ;;
-  *UseG1GC*) WANT_GC="G1" ;;
-  *UseZGC*) WANT_GC="The Z Garbage Collector" ;;
-  *UseShenandoahGC*) WANT_GC="Shenandoah" ;;
-  *) WANT_GC="Serial" ;;
+  *UseSerialGC*) WANT_GC="UseSerialGC" ;;
+  *UseParallelGC*) WANT_GC="UseParallelGC" ;;
+  *UseG1GC*) WANT_GC="UseG1GC" ;;
+  *UseZGC*) WANT_GC="UseZGC" ;;
+  *UseShenandoahGC*) WANT_GC="UseShenandoahGC" ;;
+  *) WANT_GC="UseSerialGC" ;;
 esac
-GC_REPORTED=$(kubectl -n "$APP_NS" logs "$POD" -c "$APP" | grep -m1 -E '^\[.*\]\[gc[], ].*Using ' | sed 's/.*Using //' || true)
-[[ -n "$GC_REPORTED" ]] || die "no 'Using <collector>' line in the pod's log - is the GC log (-Xlog:gc*) on?"
-[[ "$GC_REPORTED" == "$WANT_GC" ]] || die "the JVM selected '$GC_REPORTED' but this overlay should give '$WANT_GC'"
+FLAGS=$(kubectl -n "$APP_NS" exec "$POD" -c "$APP" -- java -XX:+PrintFlagsFinal -version 2>/dev/null \
+  | awk '$2 ~ /^(Use(Serial|Parallel|G1|Z|Shenandoah)GC|ZGenerational)$/ { print $2 "=" $4 }') || true
+[[ -n "$FLAGS" ]] || die "could not read the JVM's final flags from the pod (java -XX:+PrintFlagsFinal failed)"
+GC_REPORTED=$(tr ' ' '\n' <<<"$FLAGS" | awk -F= '$2 == "true" && $1 ~ /GC$/ { printf "%s ", $1 }' | sed 's/ $//')
+[[ "$GC_REPORTED" == "$WANT_GC" ]] || die "the JVM selected '${GC_REPORTED:-nothing}' but this overlay should give '$WANT_GC'"
+if [[ "$EXPECTED_OPTS" == *ZGenerational* ]]; then
+  grep -q 'ZGenerational=true' <<<"$FLAGS" || die "generational ZGC was requested but ZGenerational is not true"
+fi
 echo "JVM selected: $GC_REPORTED"
 echo "startup (container start -> Ready): ${STARTUP_S}s on $NODE"
 
 # ---- 4. reset, warm up, measure ---------------------------------------------------------------
 tmp=$(mktemp -d)
 pf_pid=""
-cleanup() { [[ -z "$pf_pid" ]] || kill "$pf_pid" 2>/dev/null || true; rm -rf "$tmp"; }
+log_pid=""
+cleanup() {
+  [[ -z "$pf_pid" ]] || kill "$pf_pid" 2>/dev/null || true
+  [[ -z "$log_pid" ]] || kill "$log_pid" 2>/dev/null || true
+  rm -rf "$tmp"
+}
 trap cleanup EXIT
 
 log "Resetting data (every job is deleted)"
@@ -199,6 +211,10 @@ log "Running $K6_SCRIPT: warm-up $WARMUP, then measuring $DURATION at ${RATE}/s"
 k6_args=(run --quiet --summary-export "$tmp/k6.json" --summary-trend-stats 'avg,med,p(90),p(95),p(99),p(99.9),max'
   -e "GRPC_ADDR=$GRPC_ADDR" -e "RATE=$RATE" -e "WARMUP=$WARMUP" -e "DURATION=$DURATION")
 [[ -z "$P99_LIMIT_MS" ]] || k6_args+=(-e "P99_LIMIT_MS=$P99_LIMIT_MS")
+# Stream the pod's log for the whole run: the kubelet rotates container logs at ~10Mi and the
+# per-request JSON logs fill that quickly, so reading it afterwards could miss the GC lines.
+kubectl -n "$APP_NS" logs -f "$POD" -c "$APP" --since=5s > "$tmp/pod.full" 2>/dev/null &
+log_pid=$!
 T0=$(date +%s)
 K6_RC=0
 k6 "${k6_args[@]}" "$K6_SCRIPT" || K6_RC=$?
@@ -220,7 +236,9 @@ while IFS=$'\t' read -r name query; do
     || echo "WARNING: query $name failed" >&2
 done < <(jq -r 'to_entries[] | select(.key | startswith("_") | not) | [.key, .value] | @tsv' experiments/gc/queries.json)
 
-kubectl -n "$APP_NS" logs "$POD" -c "$APP" --since="$(( $(date +%s) - T0 + 120 ))s" > "$tmp/pod.log"
+kill "$log_pid" 2>/dev/null || true
+log_pid=""
+grep '^\[' "$tmp/pod.full" > "$tmp/pod.log" || true
 
 TS=$(date -u +%Y%m%dT%H%M%SZ)
 mkdir -p "$RESULTS_DIR/raw"
