@@ -1,4 +1,5 @@
 # Experiment 2 point: parallel collector, 512Mi memory limit (request = limit), MaxRAMPercentage=75.
+# Repeat 2 pins the pod to one node (the first repeat ran unpinned and landed on two different nodes).
 # Same as the experiment 1 parallel overlay except for the memory. CPU request/limit stay 250m/1500m. The 768Mi point is
 # the experiment 1 result for this collector (MaxRAMPercentage is 75 there too).
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -22,6 +23,8 @@ patches:
       spec:
         template:
           spec:
+            nodeSelector:
+              kubernetes.io/hostname: gke-dev-cluster-default-pool-dcb7c914-cx1n
             containers:
               - name: job-manager-api
                 resources:
