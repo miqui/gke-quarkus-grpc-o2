@@ -166,7 +166,7 @@ case "$EXPECTED_OPTS" in
   *UseShenandoahGC*) WANT_GC="Shenandoah" ;;
   *) WANT_GC="Serial" ;;
 esac
-GC_REPORTED=$(kubectl -n "$APP_NS" logs "$POD" -c "$APP" | grep -m1 -E '^\[.*\]\[gc[],].*Using ' | sed 's/.*Using //' || true)
+GC_REPORTED=$(kubectl -n "$APP_NS" logs "$POD" -c "$APP" | grep -m1 -E '^\[.*\]\[gc[], ].*Using ' | sed 's/.*Using //' || true)
 [[ -n "$GC_REPORTED" ]] || die "no 'Using <collector>' line in the pod's log - is the GC log (-Xlog:gc*) on?"
 [[ "$GC_REPORTED" == "$WANT_GC" ]] || die "the JVM selected '$GC_REPORTED' but this overlay should give '$WANT_GC'"
 echo "JVM selected: $GC_REPORTED"
