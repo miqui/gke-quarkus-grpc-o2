@@ -1,0 +1,35 @@
+# Experiment 6 (Parallel): same flags as the experiment 1 'parallel' overlay, pinned to one node so node noise
+# does not decide the comparison (experiment 2 repeat 1 vs 2). 768Mi memory limit, 1 replica, no HPA.
+# GC experiment variant: ParallelGC
+# Flags go in the container's env, not job-manager-api-config: that ConfigMap is a plain resource
+# loaded with envFrom, so editing it would not restart the pods. The java launcher reads
+# JDK_JAVA_OPTIONS in addition to the Dockerfile's JAVA_TOOL_OPTIONS (MaxRAMPercentage and
+# ExitOnOutOfMemoryError stay in place). The GC log line is the same in every variant.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../../k8s
+
+components:
+  - ../_common
+
+patches:
+  - target:
+      kind: Deployment
+      name: job-manager-api
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: job-manager-api
+      spec:
+        template:
+          spec:
+            nodeSelector:
+              kubernetes.io/hostname: gke-dev-cluster-default-pool-dcb7c914-cx1n
+            containers:
+              - name: job-manager-api
+                env:
+                  - name: JDK_JAVA_OPTIONS
+                    value: "-XX:+UseParallelGC -Xlog:gc*:stdout:time,uptime,level,tags"
