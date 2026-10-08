@@ -1,0 +1,30 @@
+[2026-10-07T19:47:04.225+0000][1170.466s][info][gc,start       ] GC(426) Pause Young (Allocation Failure)
+[2026-10-07T19:47:04.238+0000][1170.479s][info][gc,heap        ] GC(426) DefNew: 36013K(38144K)->2469K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 2093K(4224K)->2469K(4224K)
+[2026-10-07T19:47:04.238+0000][1170.480s][info][gc,heap        ] GC(426) Tenured: 53622K(84464K)->53716K(84464K)
+[2026-10-07T19:47:04.239+0000][1170.480s][info][gc,metaspace   ] GC(426) Metaspace: 74721K(75648K)->74721K(75648K) NonClass: 65426K(65920K)->65426K(65920K) Class: 9294K(9728K)->9294K(9728K)
+[2026-10-07T19:47:04.239+0000][1170.480s][info][gc             ] GC(426) Pause Young (Allocation Failure) 87M->54M(119M) 14.011ms
+[2026-10-07T19:47:04.239+0000][1170.480s][info][gc,cpu         ] GC(426) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T19:47:59.711+0000][1225.953s][info][gc,start       ] GC(427) Pause Young (Allocation Failure)
+[2026-10-07T19:47:59.727+0000][1225.968s][info][gc,heap        ] GC(427) DefNew: 36389K(38144K)->3603K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 2469K(4224K)->3603K(4224K)
+[2026-10-07T19:47:59.727+0000][1225.968s][info][gc,heap        ] GC(427) Tenured: 53716K(84464K)->54135K(84464K)
+[2026-10-07T19:47:59.727+0000][1225.968s][info][gc,metaspace   ] GC(427) Metaspace: 74777K(75648K)->74777K(75648K) NonClass: 65481K(65920K)->65481K(65920K) Class: 9296K(9728K)->9296K(9728K)
+[2026-10-07T19:47:59.727+0000][1225.968s][info][gc             ] GC(427) Pause Young (Allocation Failure) 87M->56M(119M) 15.268ms
+[2026-10-07T19:47:59.727+0000][1225.968s][info][gc,cpu         ] GC(427) User=0.01s Sys=0.00s Real=0.02s
+[2026-10-07T19:48:52.851+0000][1279.092s][info][gc,start       ] GC(428) Pause Young (Allocation Failure)
+[2026-10-07T19:48:52.883+0000][1279.124s][info][gc,heap        ] GC(428) DefNew: 37523K(38144K)->3471K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 3603K(4224K)->3471K(4224K)
+[2026-10-07T19:48:52.883+0000][1279.124s][info][gc,heap        ] GC(428) Tenured: 54135K(84464K)->56075K(84464K)
+[2026-10-07T19:48:52.883+0000][1279.124s][info][gc,metaspace   ] GC(428) Metaspace: 74808K(75712K)->74808K(75712K) NonClass: 65512K(65984K)->65512K(65984K) Class: 9296K(9728K)->9296K(9728K)
+[2026-10-07T19:48:52.883+0000][1279.124s][info][gc             ] GC(428) Pause Young (Allocation Failure) 89M->58M(119M) 32.009ms
+[2026-10-07T19:48:52.883+0000][1279.124s][info][gc,cpu         ] GC(428) User=0.02s Sys=0.00s Real=0.03s
+[2026-10-07T19:49:55.006+0000][1341.247s][info][gc,start       ] GC(429) Pause Young (Allocation Failure)
+[2026-10-07T19:49:55.022+0000][1341.263s][info][gc,heap        ] GC(429) DefNew: 37391K(38144K)->2743K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 3471K(4224K)->2743K(4224K)
+[2026-10-07T19:49:55.022+0000][1341.263s][info][gc,heap        ] GC(429) Tenured: 56075K(84464K)->57660K(84464K)
+[2026-10-07T19:49:55.022+0000][1341.263s][info][gc,metaspace   ] GC(429) Metaspace: 74877K(75712K)->74877K(75712K) NonClass: 65581K(65984K)->65581K(65984K) Class: 9296K(9728K)->9296K(9728K)
+[2026-10-07T19:49:55.023+0000][1341.264s][info][gc             ] GC(429) Pause Young (Allocation Failure) 91M->58M(119M) 16.626ms
+[2026-10-07T19:49:55.023+0000][1341.264s][info][gc,cpu         ] GC(429) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T19:50:57.319+0000][1403.560s][info][gc,start       ] GC(430) Pause Young (Allocation Failure)
+[2026-10-07T19:50:57.330+0000][1403.571s][info][gc,heap        ] GC(430) DefNew: 36652K(38144K)->1584K(38144K) Eden: 33909K(33920K)->0K(33920K) From: 2743K(4224K)->1584K(4224K)
+[2026-10-07T19:50:57.331+0000][1403.572s][info][gc,heap        ] GC(430) Tenured: 57660K(84464K)->59378K(84464K)
+[2026-10-07T19:50:57.331+0000][1403.572s][info][gc,metaspace   ] GC(430) Metaspace: 74880K(75712K)->74880K(75712K) NonClass: 65584K(65984K)->65584K(65984K) Class: 9296K(9728K)->9296K(9728K)
+[2026-10-07T19:50:57.331+0000][1403.572s][info][gc             ] GC(430) Pause Young (Allocation Failure) 92M->59M(119M) 11.848ms
+[2026-10-07T19:50:57.331+0000][1403.572s][info][gc,cpu         ] GC(430) User=0.01s Sys=0.00s Real=0.01s

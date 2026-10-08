@@ -1,0 +1,171 @@
+{
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "status is OK": {
+                    "passes": 2402,
+                    "fails": 0,
+                    "name": "status is OK",
+                    "path": "::status is OK",
+                    "id": "d83a99fb6db0de09e9f0d32dd8d2e9d5"
+                },
+                "has at least one item": {
+                    "name": "has at least one item",
+                    "path": "::has at least one item",
+                    "id": "af0bd7eccc793b84e0bc51b25395f325",
+                    "passes": 2402,
+                    "fails": 0
+                },
+                "has totalCount": {
+                    "name": "has totalCount",
+                    "path": "::has totalCount",
+                    "id": "78061098ef4b2937c4ebc207ee6ede0a",
+                    "passes": 2402,
+                    "fails": 0
+                },
+                "by label: status is OK": {
+                    "name": "by label: status is OK",
+                    "path": "::by label: status is OK",
+                    "id": "63046d5cc751a21b6a30bba6377d8b61",
+                    "passes": 2402,
+                    "fails": 0
+                },
+                "by label: a page of at most 5": {
+                    "path": "::by label: a page of at most 5",
+                    "id": "7648459f475c0b966defad8657a0adba",
+                    "passes": 2402,
+                    "fails": 0,
+                    "name": "by label: a page of at most 5"
+                },
+                "by label: all 10 counted": {
+                    "name": "by label: all 10 counted",
+                    "path": "::by label: all 10 counted",
+                    "id": "564805a2238bdadfc9a3d727be34cff3",
+                    "passes": 2402,
+                    "fails": 0
+                },
+                "by state: only queued or running": {
+                    "name": "by state: only queued or running",
+                    "path": "::by state: only queued or running",
+                    "id": "807162a8e74baff76d0c4877d1fda822",
+                    "passes": 2402,
+                    "fails": 0
+                },
+                "get: id matches": {
+                    "name": "get: id matches",
+                    "path": "::get: id matches",
+                    "id": "4a6a6b43957e6af804f07bb7ac46785a",
+                    "passes": 2402,
+                    "fails": 0
+                },
+                "events: has the creation event": {
+                    "passes": 2402,
+                    "fails": 0,
+                    "name": "events: has the creation event",
+                    "path": "::events: has the creation event",
+                    "id": "a531940c7d86f4ebc60f3110e66f5b34"
+                },
+                "types: registry is not empty": {
+                    "name": "types: registry is not empty",
+                    "path": "::types: registry is not empty",
+                    "id": "5df6d06136f0c6bd53e19e31e92b781f",
+                    "passes": 2402,
+                    "fails": 0
+                }
+            },
+        "name": "",
+        "path": ""
+    },
+    "metrics": {
+        "iterations": {
+            "count": 2402,
+            "rate": 9.922612422093705
+        },
+        "dropped_iterations{scenario:measure}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<1": false
+            }
+        },
+        "grpc_req_duration": {
+            "p(95)": 50.99721695,
+            "p(99)": 83.20437846999998,
+            "p(99.9)": 212.01552227200676,
+            "max": 1705.442708,
+            "avg": 40.496367676014515,
+            "med": 38.236916,
+            "p(90)": 45.2708289,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "data_sent": {
+            "rate": 9987.344868660819,
+            "count": 2417670
+        },
+        "data_received": {
+            "count": 15482161,
+            "rate": 63956.48753516016
+        },
+        "grpc_req_duration{scenario:measure}": {
+            "p(99.9)": 205.84975001000086,
+            "max": 1705.442708,
+            "avg": 40.38406630427554,
+            "med": 38.112395500000005,
+            "p(90)": 44.8886045,
+            "p(95)": 50.78210399999999,
+            "p(99)": 82.87560799999996,
+            "thresholds": {
+                "max>=0": false
+            }
+        },
+        "vus": {
+            "value": 0,
+            "min": 0,
+            "max": 7
+        },
+        "iteration_duration": {
+            "avg": 453.06948185054085,
+            "med": 436.965562,
+            "p(90)": 552.6501581,
+            "p(95)": 590.7370332999999,
+            "p(99)": 721.738448,
+            "p(99.9)": 904.7510084670141,
+            "max": 2433.158167
+        },
+        "checks": {
+            "passes": 24020,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "dropped_iterations": {
+            "count": 0,
+            "rate": 0
+        },
+        "vus_max": {
+            "max": 100,
+            "value": 100,
+            "min": 100
+        }
+    },
+    "setup_data": {
+        "ids": [
+            "b00ad7dd-acea-4bef-af7c-1c4c7e62cb7b",
+            "db7857ea-d9c3-4545-8f1f-21c92adbed78",
+            "c20aa8db-65a9-461c-ab3a-f327c6ad1a8f",
+            "2e114837-beb6-42d2-b904-1ed6c2fcc8cf",
+            "bc15a8db-e169-458e-8b9d-2c096006cb76",
+            "d429ed00-eeb4-43a5-94dd-4332901d0320",
+            "d4fa2352-bf36-4420-badd-47d3bb6311a1",
+            "20a183e7-601a-4c55-a310-0b8b7eccf7c2",
+            "07b47635-3bd1-46de-a994-ee13baa0e582",
+            "f7107e29-7686-4d31-8bb4-ade8b82db510"
+        ],
+        "run": "k6-list-jobs-1791401872898"
+    }
+}

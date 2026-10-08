@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="480" font-family="sans-serif" font-size="12">
+<rect width="720" height="480" fill="#fff"/>
+<rect x="70" y="70" width="580" height="340" fill="none" stroke="#999"/>
+<text x="360.0" y="460" text-anchor="middle">prometheus.server_p99_ms (lower is better)</text>
+<text x="18" y="240.0" text-anchor="middle" transform="rotate(-90 18 240.0)">derived.cpu_seconds_per_1k_requests (lower is better)</text>
+<circle cx="621.0" cy="87.0" r="6" fill="#999"/>
+<text x="630.0" y="79.0">wl-parallel</text>
+<circle cx="99.0" cy="393.0" r="6" fill="#0F7B6C"/>
+<text x="108.0" y="385.0">wl-serial</text>
+<text x="70" y="58" fill="#555">green = on the frontier, red ring = misses the SLO</text>
+</svg>

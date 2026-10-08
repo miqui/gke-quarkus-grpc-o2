@@ -1,0 +1,17 @@
+{
+  "rule": "p99 <= 1.10 x median wl-serial (baseline) k6 p99, per workload",
+  "script": "k6-list-jobs.js",
+  "rate": 14,
+  "baseline_p99_ms": [
+    71.14306285,
+    58.967085399999974,
+    68.36949134999998
+  ],
+  "median_ms": 68.36949134999998,
+  "p99_limit_ms": 76,
+  "server_p99_ms_baseline": [
+    9.888367415353672,
+    9.868934805842537
+  ],
+  "note": "run 1 has no Prometheus data; server p99 from runs 2 and 3"
+}

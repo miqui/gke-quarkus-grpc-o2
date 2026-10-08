@@ -1,0 +1,210 @@
+[2026-10-07T20:14:17.785+0000][2804.026s][info][gc,start       ] GC(566) Pause Young (Allocation Failure)
+[2026-10-07T20:14:17.792+0000][2804.033s][info][gc,heap        ] GC(566) DefNew: 36143K(38144K)->1938K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 2223K(4224K)->1938K(4224K)
+[2026-10-07T20:14:17.792+0000][2804.033s][info][gc,heap        ] GC(566) Tenured: 48536K(84464K)->48666K(84464K)
+[2026-10-07T20:14:17.792+0000][2804.033s][info][gc,metaspace   ] GC(566) Metaspace: 75362K(76096K)->75362K(76096K) NonClass: 66048K(66368K)->66048K(66368K) Class: 9314K(9728K)->9314K(9728K)
+[2026-10-07T20:14:17.792+0000][2804.033s][info][gc             ] GC(566) Pause Young (Allocation Failure) 82M->49M(119M) 6.838ms
+[2026-10-07T20:14:17.792+0000][2804.033s][info][gc,cpu         ] GC(566) User=0.00s Sys=0.00s Real=0.00s
+[2026-10-07T20:14:19.776+0000][2806.017s][info][gc,start       ] GC(567) Pause Young (Allocation Failure)
+[2026-10-07T20:14:19.784+0000][2806.025s][info][gc,heap        ] GC(567) DefNew: 35858K(38144K)->2170K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1938K(4224K)->2170K(4224K)
+[2026-10-07T20:14:19.784+0000][2806.025s][info][gc,heap        ] GC(567) Tenured: 48666K(84464K)->48666K(84464K)
+[2026-10-07T20:14:19.784+0000][2806.025s][info][gc,metaspace   ] GC(567) Metaspace: 75362K(76096K)->75362K(76096K) NonClass: 66048K(66368K)->66048K(66368K) Class: 9314K(9728K)->9314K(9728K)
+[2026-10-07T20:14:19.784+0000][2806.025s][info][gc             ] GC(567) Pause Young (Allocation Failure) 82M->49M(119M) 7.977ms
+[2026-10-07T20:14:19.784+0000][2806.025s][info][gc,cpu         ] GC(567) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:14:26.894+0000][2813.135s][info][gc,start       ] GC(568) Pause Young (Allocation Failure)
+[2026-10-07T20:14:26.908+0000][2813.149s][info][gc,heap        ] GC(568) DefNew: 36090K(38144K)->2807K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 2170K(4224K)->2807K(4224K)
+[2026-10-07T20:14:26.908+0000][2813.149s][info][gc,heap        ] GC(568) Tenured: 48666K(84464K)->48732K(84464K)
+[2026-10-07T20:14:26.908+0000][2813.149s][info][gc,metaspace   ] GC(568) Metaspace: 75365K(76096K)->75365K(76096K) NonClass: 66050K(66368K)->66050K(66368K) Class: 9314K(9728K)->9314K(9728K)
+[2026-10-07T20:14:26.908+0000][2813.149s][info][gc             ] GC(568) Pause Young (Allocation Failure) 82M->50M(119M) 14.114ms
+[2026-10-07T20:14:26.908+0000][2813.149s][info][gc,cpu         ] GC(568) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:14:33.679+0000][2819.920s][info][gc,start       ] GC(569) Pause Young (Allocation Failure)
+[2026-10-07T20:14:33.692+0000][2819.934s][info][gc,heap        ] GC(569) DefNew: 36727K(38144K)->1280K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 2807K(4224K)->1280K(4224K)
+[2026-10-07T20:14:33.693+0000][2819.934s][info][gc,heap        ] GC(569) Tenured: 48732K(84464K)->51419K(84464K)
+[2026-10-07T20:14:33.693+0000][2819.934s][info][gc,metaspace   ] GC(569) Metaspace: 75365K(76096K)->75365K(76096K) NonClass: 66050K(66368K)->66050K(66368K) Class: 9314K(9728K)->9314K(9728K)
+[2026-10-07T20:14:33.693+0000][2819.934s][info][gc             ] GC(569) Pause Young (Allocation Failure) 83M->51M(119M) 13.400ms
+[2026-10-07T20:14:33.693+0000][2819.934s][info][gc,cpu         ] GC(569) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:14:40.843+0000][2827.084s][info][gc,start       ] GC(570) Pause Young (Allocation Failure)
+[2026-10-07T20:14:40.853+0000][2827.095s][info][gc,heap        ] GC(570) DefNew: 35200K(38144K)->1965K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1280K(4224K)->1965K(4224K)
+[2026-10-07T20:14:40.854+0000][2827.095s][info][gc,heap        ] GC(570) Tenured: 51419K(84464K)->51419K(84464K)
+[2026-10-07T20:14:40.854+0000][2827.095s][info][gc,metaspace   ] GC(570) Metaspace: 75365K(76096K)->75365K(76096K) NonClass: 66050K(66368K)->66050K(66368K) Class: 9314K(9728K)->9314K(9728K)
+[2026-10-07T20:14:40.854+0000][2827.095s][info][gc             ] GC(570) Pause Young (Allocation Failure) 84M->52M(119M) 10.604ms
+[2026-10-07T20:14:40.854+0000][2827.095s][info][gc,cpu         ] GC(570) User=0.01s Sys=0.00s Real=0.02s
+[2026-10-07T20:14:48.133+0000][2834.374s][info][gc,start       ] GC(571) Pause Young (Allocation Failure)
+[2026-10-07T20:14:48.143+0000][2834.385s][info][gc,heap        ] GC(571) DefNew: 35885K(38144K)->2301K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1965K(4224K)->2301K(4224K)
+[2026-10-07T20:14:48.144+0000][2834.385s][info][gc,heap        ] GC(571) Tenured: 51419K(84464K)->51419K(84464K)
+[2026-10-07T20:14:48.144+0000][2834.385s][info][gc,metaspace   ] GC(571) Metaspace: 75365K(76096K)->75365K(76096K) NonClass: 66050K(66368K)->66050K(66368K) Class: 9314K(9728K)->9314K(9728K)
+[2026-10-07T20:14:48.144+0000][2834.385s][info][gc             ] GC(571) Pause Young (Allocation Failure) 85M->52M(119M) 11.076ms
+[2026-10-07T20:14:48.144+0000][2834.385s][info][gc,cpu         ] GC(571) User=0.01s Sys=0.00s Real=0.02s
+[2026-10-07T20:14:55.422+0000][2841.663s][info][gc,start       ] GC(572) Pause Young (Allocation Failure)
+[2026-10-07T20:14:55.433+0000][2841.674s][info][gc,heap        ] GC(572) DefNew: 36221K(38144K)->1369K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 2301K(4224K)->1369K(4224K)
+[2026-10-07T20:14:55.433+0000][2841.674s][info][gc,heap        ] GC(572) Tenured: 51419K(84464K)->52580K(84464K)
+[2026-10-07T20:14:55.433+0000][2841.674s][info][gc,metaspace   ] GC(572) Metaspace: 75365K(76096K)->75365K(76096K) NonClass: 66050K(66368K)->66050K(66368K) Class: 9315K(9728K)->9315K(9728K)
+[2026-10-07T20:14:55.433+0000][2841.674s][info][gc             ] GC(572) Pause Young (Allocation Failure) 85M->52M(119M) 11.375ms
+[2026-10-07T20:14:55.433+0000][2841.674s][info][gc,cpu         ] GC(572) User=0.00s Sys=0.00s Real=0.01s
+[2026-10-07T20:15:02.811+0000][2849.052s][info][gc,start       ] GC(573) Pause Young (Allocation Failure)
+[2026-10-07T20:15:02.822+0000][2849.063s][info][gc,heap        ] GC(573) DefNew: 35289K(38144K)->1511K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1369K(4224K)->1511K(4224K)
+[2026-10-07T20:15:02.822+0000][2849.063s][info][gc,heap        ] GC(573) Tenured: 52580K(84464K)->52580K(84464K)
+[2026-10-07T20:15:02.822+0000][2849.063s][info][gc,metaspace   ] GC(573) Metaspace: 75365K(76096K)->75365K(76096K) NonClass: 66050K(66368K)->66050K(66368K) Class: 9315K(9728K)->9315K(9728K)
+[2026-10-07T20:15:02.822+0000][2849.063s][info][gc             ] GC(573) Pause Young (Allocation Failure) 85M->52M(119M) 10.786ms
+[2026-10-07T20:15:02.822+0000][2849.063s][info][gc,cpu         ] GC(573) User=0.01s Sys=0.01s Real=0.01s
+[2026-10-07T20:15:10.237+0000][2856.478s][info][gc,start       ] GC(574) Pause Young (Allocation Failure)
+[2026-10-07T20:15:10.248+0000][2856.489s][info][gc,heap        ] GC(574) DefNew: 35431K(38144K)->1697K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1511K(4224K)->1697K(4224K)
+[2026-10-07T20:15:10.250+0000][2856.491s][info][gc,heap        ] GC(574) Tenured: 52580K(84464K)->52580K(84464K)
+[2026-10-07T20:15:10.250+0000][2856.491s][info][gc,metaspace   ] GC(574) Metaspace: 75368K(76096K)->75368K(76096K) NonClass: 66052K(66368K)->66052K(66368K) Class: 9315K(9728K)->9315K(9728K)
+[2026-10-07T20:15:10.250+0000][2856.491s][info][gc             ] GC(574) Pause Young (Allocation Failure) 85M->53M(119M) 12.714ms
+[2026-10-07T20:15:10.250+0000][2856.491s][info][gc,cpu         ] GC(574) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:15:17.671+0000][2863.913s][info][gc,start       ] GC(575) Pause Young (Allocation Failure)
+[2026-10-07T20:15:17.681+0000][2863.922s][info][gc,heap        ] GC(575) DefNew: 35616K(38144K)->1748K(38144K) Eden: 33918K(33920K)->0K(33920K) From: 1697K(4224K)->1748K(4224K)
+[2026-10-07T20:15:17.681+0000][2863.922s][info][gc,heap        ] GC(575) Tenured: 52580K(84464K)->52580K(84464K)
+[2026-10-07T20:15:17.681+0000][2863.922s][info][gc,metaspace   ] GC(575) Metaspace: 75368K(76096K)->75368K(76096K) NonClass: 66052K(66368K)->66052K(66368K) Class: 9315K(9728K)->9315K(9728K)
+[2026-10-07T20:15:17.681+0000][2863.923s][info][gc             ] GC(575) Pause Young (Allocation Failure) 86M->53M(119M) 9.996ms
+[2026-10-07T20:15:17.682+0000][2863.923s][info][gc,cpu         ] GC(575) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:15:24.266+0000][2870.507s][info][gc,start       ] GC(576) Pause Young (Allocation Failure)
+[2026-10-07T20:15:24.278+0000][2870.519s][info][gc,heap        ] GC(576) DefNew: 35668K(38144K)->2786K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1748K(4224K)->2786K(4224K)
+[2026-10-07T20:15:24.279+0000][2870.520s][info][gc,heap        ] GC(576) Tenured: 52580K(84464K)->52580K(84464K)
+[2026-10-07T20:15:24.279+0000][2870.520s][info][gc,metaspace   ] GC(576) Metaspace: 75368K(76096K)->75368K(76096K) NonClass: 66052K(66368K)->66052K(66368K) Class: 9315K(9728K)->9315K(9728K)
+[2026-10-07T20:15:24.279+0000][2870.520s][info][gc             ] GC(576) Pause Young (Allocation Failure) 86M->54M(119M) 12.287ms
+[2026-10-07T20:15:24.279+0000][2870.520s][info][gc,cpu         ] GC(576) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:15:31.134+0000][2877.375s][info][gc,start       ] GC(577) Pause Young (Allocation Failure)
+[2026-10-07T20:15:31.150+0000][2877.391s][info][gc,heap        ] GC(577) DefNew: 36706K(38144K)->3298K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 2786K(4224K)->3298K(4224K)
+[2026-10-07T20:15:31.150+0000][2877.391s][info][gc,heap        ] GC(577) Tenured: 52580K(84464K)->53591K(84464K)
+[2026-10-07T20:15:31.150+0000][2877.391s][info][gc,metaspace   ] GC(577) Metaspace: 75369K(76096K)->75369K(76096K) NonClass: 66053K(66368K)->66053K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:15:31.150+0000][2877.391s][info][gc             ] GC(577) Pause Young (Allocation Failure) 87M->55M(119M) 15.868ms
+[2026-10-07T20:15:31.150+0000][2877.391s][info][gc,cpu         ] GC(577) User=0.02s Sys=0.00s Real=0.01s
+[2026-10-07T20:15:38.206+0000][2884.447s][info][gc,start       ] GC(578) Pause Young (Allocation Failure)
+[2026-10-07T20:15:38.220+0000][2884.461s][info][gc,heap        ] GC(578) DefNew: 37218K(38144K)->2359K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 3298K(4224K)->2359K(4224K)
+[2026-10-07T20:15:38.220+0000][2884.461s][info][gc,heap        ] GC(578) Tenured: 53591K(84464K)->55267K(84464K)
+[2026-10-07T20:15:38.220+0000][2884.461s][info][gc,metaspace   ] GC(578) Metaspace: 75370K(76096K)->75370K(76096K) NonClass: 66054K(66368K)->66054K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:15:38.220+0000][2884.461s][info][gc             ] GC(578) Pause Young (Allocation Failure) 88M->56M(119M) 14.193ms
+[2026-10-07T20:15:38.220+0000][2884.461s][info][gc,cpu         ] GC(578) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:15:45.645+0000][2891.886s][info][gc,start       ] GC(579) Pause Young (Allocation Failure)
+[2026-10-07T20:15:45.656+0000][2891.897s][info][gc,heap        ] GC(579) DefNew: 36279K(38144K)->1239K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 2359K(4224K)->1239K(4224K)
+[2026-10-07T20:15:45.656+0000][2891.897s][info][gc,heap        ] GC(579) Tenured: 55267K(84464K)->56761K(84464K)
+[2026-10-07T20:15:45.656+0000][2891.898s][info][gc,metaspace   ] GC(579) Metaspace: 75371K(76096K)->75371K(76096K) NonClass: 66054K(66368K)->66054K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:15:45.657+0000][2891.898s][info][gc             ] GC(579) Pause Young (Allocation Failure) 89M->56M(119M) 11.771ms
+[2026-10-07T20:15:45.657+0000][2891.898s][info][gc,cpu         ] GC(579) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:15:52.853+0000][2899.094s][info][gc,start       ] GC(580) Pause Young (Allocation Failure)
+[2026-10-07T20:15:52.864+0000][2899.105s][info][gc,heap        ] GC(580) DefNew: 35159K(38144K)->1528K(38144K) Eden: 33919K(33920K)->0K(33920K) From: 1239K(4224K)->1528K(4224K)
+[2026-10-07T20:15:52.864+0000][2899.106s][info][gc,heap        ] GC(580) Tenured: 56761K(84464K)->56761K(84464K)
+[2026-10-07T20:15:52.864+0000][2899.106s][info][gc,metaspace   ] GC(580) Metaspace: 75371K(76096K)->75371K(76096K) NonClass: 66054K(66368K)->66054K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:15:52.865+0000][2899.106s][info][gc             ] GC(580) Pause Young (Allocation Failure) 89M->56M(119M) 11.374ms
+[2026-10-07T20:15:52.865+0000][2899.106s][info][gc,cpu         ] GC(580) User=0.01s Sys=0.00s Real=0.02s
+[2026-10-07T20:16:00.383+0000][2906.624s][info][gc,start       ] GC(581) Pause Young (Allocation Failure)
+[2026-10-07T20:16:00.391+0000][2906.632s][info][gc,heap        ] GC(581) DefNew: 35448K(38144K)->1575K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1528K(4224K)->1575K(4224K)
+[2026-10-07T20:16:00.391+0000][2906.633s][info][gc,heap        ] GC(581) Tenured: 56761K(84464K)->56761K(84464K)
+[2026-10-07T20:16:00.392+0000][2906.633s][info][gc,metaspace   ] GC(581) Metaspace: 75372K(76096K)->75372K(76096K) NonClass: 66055K(66368K)->66055K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:16:00.392+0000][2906.633s][info][gc             ] GC(581) Pause Young (Allocation Failure) 90M->56M(119M) 8.470ms
+[2026-10-07T20:16:00.392+0000][2906.633s][info][gc,cpu         ] GC(581) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:16:07.765+0000][2914.006s][info][gc,start       ] GC(582) Pause Young (Allocation Failure)
+[2026-10-07T20:16:07.773+0000][2914.014s][info][gc,heap        ] GC(582) DefNew: 35495K(38144K)->1639K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1575K(4224K)->1639K(4224K)
+[2026-10-07T20:16:07.773+0000][2914.014s][info][gc,heap        ] GC(582) Tenured: 56761K(84464K)->56761K(84464K)
+[2026-10-07T20:16:07.773+0000][2914.014s][info][gc,metaspace   ] GC(582) Metaspace: 75372K(76096K)->75372K(76096K) NonClass: 66055K(66368K)->66055K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:16:07.773+0000][2914.014s][info][gc             ] GC(582) Pause Young (Allocation Failure) 90M->57M(119M) 7.901ms
+[2026-10-07T20:16:07.774+0000][2914.015s][info][gc,cpu         ] GC(582) User=0.01s Sys=0.00s Real=0.00s
+[2026-10-07T20:16:15.199+0000][2921.440s][info][gc,start       ] GC(583) Pause Young (Allocation Failure)
+[2026-10-07T20:16:15.208+0000][2921.449s][info][gc,heap        ] GC(583) DefNew: 35559K(38144K)->1746K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1639K(4224K)->1746K(4224K)
+[2026-10-07T20:16:15.208+0000][2921.449s][info][gc,heap        ] GC(583) Tenured: 56761K(84464K)->56761K(84464K)
+[2026-10-07T20:16:15.208+0000][2921.449s][info][gc,metaspace   ] GC(583) Metaspace: 75372K(76096K)->75372K(76096K) NonClass: 66055K(66368K)->66055K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:16:15.208+0000][2921.449s][info][gc             ] GC(583) Pause Young (Allocation Failure) 90M->57M(119M) 9.170ms
+[2026-10-07T20:16:15.208+0000][2921.449s][info][gc,cpu         ] GC(583) User=0.00s Sys=0.00s Real=0.01s
+[2026-10-07T20:16:22.618+0000][2928.859s][info][gc,start       ] GC(584) Pause Young (Allocation Failure)
+[2026-10-07T20:16:22.628+0000][2928.869s][info][gc,heap        ] GC(584) DefNew: 35666K(38144K)->1793K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1746K(4224K)->1793K(4224K)
+[2026-10-07T20:16:22.628+0000][2928.869s][info][gc,heap        ] GC(584) Tenured: 56761K(84464K)->56761K(84464K)
+[2026-10-07T20:16:22.628+0000][2928.869s][info][gc,metaspace   ] GC(584) Metaspace: 75372K(76096K)->75372K(76096K) NonClass: 66056K(66368K)->66056K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:16:22.628+0000][2928.869s][info][gc             ] GC(584) Pause Young (Allocation Failure) 90M->57M(119M) 10.455ms
+[2026-10-07T20:16:22.628+0000][2928.870s][info][gc,cpu         ] GC(584) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:16:30.036+0000][2936.277s][info][gc,start       ] GC(585) Pause Young (Allocation Failure)
+[2026-10-07T20:16:30.047+0000][2936.288s][info][gc,heap        ] GC(585) DefNew: 35713K(38144K)->1923K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1793K(4224K)->1923K(4224K)
+[2026-10-07T20:16:30.047+0000][2936.288s][info][gc,heap        ] GC(585) Tenured: 56761K(84464K)->56761K(84464K)
+[2026-10-07T20:16:30.047+0000][2936.288s][info][gc,metaspace   ] GC(585) Metaspace: 75375K(76096K)->75375K(76096K) NonClass: 66058K(66368K)->66058K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:16:30.047+0000][2936.288s][info][gc             ] GC(585) Pause Young (Allocation Failure) 90M->57M(119M) 11.516ms
+[2026-10-07T20:16:30.047+0000][2936.288s][info][gc,cpu         ] GC(585) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:16:37.471+0000][2943.712s][info][gc,start       ] GC(586) Pause Young (Allocation Failure)
+[2026-10-07T20:16:37.479+0000][2943.720s][info][gc,heap        ] GC(586) DefNew: 35843K(38144K)->1958K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1923K(4224K)->1958K(4224K)
+[2026-10-07T20:16:37.479+0000][2943.720s][info][gc,heap        ] GC(586) Tenured: 56761K(84464K)->56761K(84464K)
+[2026-10-07T20:16:37.479+0000][2943.720s][info][gc,metaspace   ] GC(586) Metaspace: 75375K(76096K)->75375K(76096K) NonClass: 66058K(66368K)->66058K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:16:37.479+0000][2943.720s][info][gc             ] GC(586) Pause Young (Allocation Failure) 90M->57M(119M) 8.322ms
+[2026-10-07T20:16:37.479+0000][2943.720s][info][gc,cpu         ] GC(586) User=0.00s Sys=0.00s Real=0.01s
+[2026-10-07T20:16:44.884+0000][2951.125s][info][gc,start       ] GC(587) Pause Young (Allocation Failure)
+[2026-10-07T20:16:44.893+0000][2951.134s][info][gc,heap        ] GC(587) DefNew: 35878K(38144K)->2049K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1958K(4224K)->2049K(4224K)
+[2026-10-07T20:16:44.893+0000][2951.134s][info][gc,heap        ] GC(587) Tenured: 56761K(84464K)->56761K(84464K)
+[2026-10-07T20:16:44.893+0000][2951.134s][info][gc,metaspace   ] GC(587) Metaspace: 75375K(76096K)->75375K(76096K) NonClass: 66058K(66368K)->66058K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:16:44.893+0000][2951.134s][info][gc             ] GC(587) Pause Young (Allocation Failure) 90M->57M(119M) 9.604ms
+[2026-10-07T20:16:44.894+0000][2951.135s][info][gc,cpu         ] GC(587) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:16:52.317+0000][2958.558s][info][gc,start       ] GC(588) Pause Young (Allocation Failure)
+[2026-10-07T20:16:52.330+0000][2958.571s][info][gc,heap        ] GC(588) DefNew: 35957K(38144K)->2157K(38144K) Eden: 33908K(33920K)->0K(33920K) From: 2049K(4224K)->2157K(4224K)
+[2026-10-07T20:16:52.330+0000][2958.571s][info][gc,heap        ] GC(588) Tenured: 56761K(84464K)->56761K(84464K)
+[2026-10-07T20:16:52.330+0000][2958.571s][info][gc,metaspace   ] GC(588) Metaspace: 75375K(76096K)->75375K(76096K) NonClass: 66058K(66368K)->66058K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:16:52.330+0000][2958.571s][info][gc             ] GC(588) Pause Young (Allocation Failure) 90M->57M(119M) 12.223ms
+[2026-10-07T20:16:52.330+0000][2958.571s][info][gc,cpu         ] GC(588) User=0.01s Sys=0.01s Real=0.01s
+[2026-10-07T20:16:59.711+0000][2965.952s][info][gc,start       ] GC(589) Pause Young (Allocation Failure)
+[2026-10-07T20:16:59.723+0000][2965.964s][info][gc,heap        ] GC(589) DefNew: 36077K(38144K)->1561K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 2157K(4224K)->1561K(4224K)
+[2026-10-07T20:16:59.723+0000][2965.964s][info][gc,heap        ] GC(589) Tenured: 56761K(84464K)->57466K(84464K)
+[2026-10-07T20:16:59.723+0000][2965.964s][info][gc,metaspace   ] GC(589) Metaspace: 75375K(76096K)->75375K(76096K) NonClass: 66058K(66368K)->66058K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:16:59.723+0000][2965.964s][info][gc             ] GC(589) Pause Young (Allocation Failure) 90M->57M(119M) 11.361ms
+[2026-10-07T20:16:59.723+0000][2965.964s][info][gc,cpu         ] GC(589) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:17:07.199+0000][2973.440s][info][gc,start       ] GC(590) Pause Young (Allocation Failure)
+[2026-10-07T20:17:07.209+0000][2973.450s][info][gc,heap        ] GC(590) DefNew: 35481K(38144K)->1608K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1561K(4224K)->1608K(4224K)
+[2026-10-07T20:17:07.210+0000][2973.451s][info][gc,heap        ] GC(590) Tenured: 57466K(84464K)->57466K(84464K)
+[2026-10-07T20:17:07.210+0000][2973.451s][info][gc,metaspace   ] GC(590) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66066K(66368K)->66066K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:17:07.210+0000][2973.451s][info][gc             ] GC(590) Pause Young (Allocation Failure) 90M->57M(119M) 10.813ms
+[2026-10-07T20:17:07.210+0000][2973.451s][info][gc,cpu         ] GC(590) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:17:14.569+0000][2980.810s][info][gc,start       ] GC(591) Pause Young (Allocation Failure)
+[2026-10-07T20:17:14.578+0000][2980.819s][info][gc,heap        ] GC(591) DefNew: 35528K(38144K)->1730K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1608K(4224K)->1730K(4224K)
+[2026-10-07T20:17:14.578+0000][2980.819s][info][gc,heap        ] GC(591) Tenured: 57466K(84464K)->57466K(84464K)
+[2026-10-07T20:17:14.578+0000][2980.819s][info][gc,metaspace   ] GC(591) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66066K(66368K)->66066K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:17:14.578+0000][2980.819s][info][gc             ] GC(591) Pause Young (Allocation Failure) 90M->57M(119M) 8.920ms
+[2026-10-07T20:17:14.578+0000][2980.819s][info][gc,cpu         ] GC(591) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:17:22.078+0000][2988.319s][info][gc,start       ] GC(592) Pause Young (Allocation Failure)
+[2026-10-07T20:17:22.092+0000][2988.333s][info][gc,heap        ] GC(592) DefNew: 35650K(38144K)->1908K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1730K(4224K)->1908K(4224K)
+[2026-10-07T20:17:22.092+0000][2988.333s][info][gc,heap        ] GC(592) Tenured: 57466K(84464K)->57466K(84464K)
+[2026-10-07T20:17:22.092+0000][2988.333s][info][gc,metaspace   ] GC(592) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66066K(66368K)->66066K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:17:22.092+0000][2988.333s][info][gc             ] GC(592) Pause Young (Allocation Failure) 90M->57M(119M) 14.210ms
+[2026-10-07T20:17:22.092+0000][2988.333s][info][gc,cpu         ] GC(592) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:17:29.368+0000][2995.609s][info][gc,start       ] GC(593) Pause Young (Allocation Failure)
+[2026-10-07T20:17:29.377+0000][2995.618s][info][gc,heap        ] GC(593) DefNew: 35828K(38144K)->2014K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1908K(4224K)->2014K(4224K)
+[2026-10-07T20:17:29.377+0000][2995.618s][info][gc,heap        ] GC(593) Tenured: 57466K(84464K)->57466K(84464K)
+[2026-10-07T20:17:29.377+0000][2995.618s][info][gc,metaspace   ] GC(593) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66066K(66368K)->66066K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:17:29.377+0000][2995.618s][info][gc             ] GC(593) Pause Young (Allocation Failure) 91M->58M(119M) 9.007ms
+[2026-10-07T20:17:29.377+0000][2995.618s][info][gc,cpu         ] GC(593) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:17:36.918+0000][3003.159s][info][gc,start       ] GC(594) Pause Young (Allocation Failure)
+[2026-10-07T20:17:36.931+0000][3003.172s][info][gc,heap        ] GC(594) DefNew: 35934K(38144K)->1837K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 2014K(4224K)->1837K(4224K)
+[2026-10-07T20:17:36.931+0000][3003.172s][info][gc,heap        ] GC(594) Tenured: 57466K(84464K)->57807K(84464K)
+[2026-10-07T20:17:36.931+0000][3003.172s][info][gc,metaspace   ] GC(594) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66066K(66368K)->66066K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:17:36.931+0000][3003.172s][info][gc             ] GC(594) Pause Young (Allocation Failure) 91M->58M(119M) 13.325ms
+[2026-10-07T20:17:36.931+0000][3003.172s][info][gc,cpu         ] GC(594) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:17:44.264+0000][3010.505s][info][gc,start       ] GC(595) Pause Young (Allocation Failure)
+[2026-10-07T20:17:44.282+0000][3010.523s][info][gc,heap        ] GC(595) DefNew: 35757K(38144K)->1666K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1837K(4224K)->1666K(4224K)
+[2026-10-07T20:17:44.283+0000][3010.524s][info][gc,heap        ] GC(595) Tenured: 57807K(84464K)->57999K(84464K)
+[2026-10-07T20:17:44.283+0000][3010.524s][info][gc,metaspace   ] GC(595) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66066K(66368K)->66066K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:17:44.283+0000][3010.524s][info][gc             ] GC(595) Pause Young (Allocation Failure) 91M->58M(119M) 19.328ms
+[2026-10-07T20:17:44.283+0000][3010.524s][info][gc,cpu         ] GC(595) User=0.01s Sys=0.01s Real=0.01s
+[2026-10-07T20:17:51.781+0000][3018.022s][info][gc,start       ] GC(596) Pause Young (Allocation Failure)
+[2026-10-07T20:17:51.790+0000][3018.031s][info][gc,heap        ] GC(596) DefNew: 35586K(38144K)->1706K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1666K(4224K)->1706K(4224K)
+[2026-10-07T20:17:51.790+0000][3018.031s][info][gc,heap        ] GC(596) Tenured: 57999K(84464K)->58140K(84464K)
+[2026-10-07T20:17:51.790+0000][3018.032s][info][gc,metaspace   ] GC(596) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66066K(66368K)->66066K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:17:51.790+0000][3018.032s][info][gc             ] GC(596) Pause Young (Allocation Failure) 91M->58M(119M) 9.839ms
+[2026-10-07T20:17:51.791+0000][3018.032s][info][gc,cpu         ] GC(596) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:17:59.032+0000][3025.273s][info][gc,start       ] GC(597) Pause Young (Allocation Failure)
+[2026-10-07T20:17:59.042+0000][3025.283s][info][gc,heap        ] GC(597) DefNew: 35626K(38144K)->1723K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1706K(4224K)->1723K(4224K)
+[2026-10-07T20:17:59.042+0000][3025.283s][info][gc,heap        ] GC(597) Tenured: 58140K(84464K)->58229K(84464K)
+[2026-10-07T20:17:59.042+0000][3025.283s][info][gc,metaspace   ] GC(597) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66066K(66368K)->66066K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:17:59.042+0000][3025.284s][info][gc             ] GC(597) Pause Young (Allocation Failure) 91M->58M(119M) 10.288ms
+[2026-10-07T20:17:59.043+0000][3025.284s][info][gc,cpu         ] GC(597) User=0.01s Sys=0.00s Real=0.01s
+[2026-10-07T20:18:06.540+0000][3032.781s][info][gc,start       ] GC(598) Pause Young (Allocation Failure)
+[2026-10-07T20:18:06.554+0000][3032.795s][info][gc,heap        ] GC(598) DefNew: 35643K(38144K)->1774K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1723K(4224K)->1774K(4224K)
+[2026-10-07T20:18:06.554+0000][3032.795s][info][gc,heap        ] GC(598) Tenured: 58229K(84464K)->58302K(84464K)
+[2026-10-07T20:18:06.554+0000][3032.795s][info][gc,metaspace   ] GC(598) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66067K(66368K)->66067K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:18:06.554+0000][3032.795s][info][gc             ] GC(598) Pause Young (Allocation Failure) 91M->58M(119M) 13.286ms
+[2026-10-07T20:18:06.554+0000][3032.795s][info][gc,cpu         ] GC(598) User=0.01s Sys=0.00s Real=0.02s
+[2026-10-07T20:18:13.865+0000][3040.106s][info][gc,start       ] GC(599) Pause Young (Allocation Failure)
+[2026-10-07T20:18:13.888+0000][3040.129s][info][gc,heap        ] GC(599) DefNew: 35694K(38144K)->1795K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1774K(4224K)->1795K(4224K)
+[2026-10-07T20:18:13.888+0000][3040.129s][info][gc,heap        ] GC(599) Tenured: 58302K(84464K)->58376K(84464K)
+[2026-10-07T20:18:13.888+0000][3040.129s][info][gc,metaspace   ] GC(599) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66067K(66368K)->66067K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:18:13.888+0000][3040.129s][info][gc             ] GC(599) Pause Young (Allocation Failure) 91M->58M(119M) 23.431ms
+[2026-10-07T20:18:13.888+0000][3040.129s][info][gc,cpu         ] GC(599) User=0.01s Sys=0.00s Real=0.02s
+[2026-10-07T20:18:21.334+0000][3047.575s][info][gc,start       ] GC(600) Pause Young (Allocation Failure)
+[2026-10-07T20:18:21.344+0000][3047.585s][info][gc,heap        ] GC(600) DefNew: 35715K(38144K)->1849K(38144K) Eden: 33920K(33920K)->0K(33920K) From: 1795K(4224K)->1849K(4224K)
+[2026-10-07T20:18:21.344+0000][3047.585s][info][gc,heap        ] GC(600) Tenured: 58376K(84464K)->58441K(84464K)
+[2026-10-07T20:18:21.344+0000][3047.585s][info][gc,metaspace   ] GC(600) Metaspace: 75383K(76096K)->75383K(76096K) NonClass: 66067K(66368K)->66067K(66368K) Class: 9316K(9728K)->9316K(9728K)
+[2026-10-07T20:18:21.344+0000][3047.585s][info][gc             ] GC(600) Pause Young (Allocation Failure) 91M->58M(119M) 9.515ms
+[2026-10-07T20:18:21.344+0000][3047.585s][info][gc,cpu         ] GC(600) User=0.01s Sys=0.00s Real=0.01s

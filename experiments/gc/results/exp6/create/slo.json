@@ -1,0 +1,17 @@
+{
+  "rule": "p99 <= 1.10 x median wl-serial (baseline) k6 p99, per workload",
+  "script": "k6-create-jobs.js",
+  "rate": 40,
+  "baseline_p99_ms": [
+    82.6759383399999,
+    73.076583,
+    77.662292
+  ],
+  "median_ms": 77.662292,
+  "p99_limit_ms": 86,
+  "server_p99_ms_baseline": [
+    13.485477178423375,
+    11.397058823529465,
+    9.954326406305984
+  ]
+}
