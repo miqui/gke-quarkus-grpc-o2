@@ -1,0 +1,110 @@
+{
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "status is OK": {
+                    "fails": 0,
+                    "name": "status is OK",
+                    "path": "::status is OK",
+                    "id": "d83a99fb6db0de09e9f0d32dd8d2e9d5",
+                    "passes": 28801
+                },
+                "response has id": {
+                    "name": "response has id",
+                    "path": "::response has id",
+                    "id": "6649b70c5c96e7e83e46163774f71c12",
+                    "passes": 28801,
+                    "fails": 0
+                },
+                "job is queued": {
+                    "name": "job is queued",
+                    "path": "::job is queued",
+                    "id": "91c593911f009d819252a09dee5e8435",
+                    "passes": 28801,
+                    "fails": 0
+                }
+            },
+        "name": "",
+        "path": ""
+    },
+    "metrics": {
+        "dropped_iterations": {
+            "rate": 0,
+            "count": 0
+        },
+        "data_received": {
+            "count": 14437870,
+            "rate": 20046.419389084742
+        },
+        "vus": {
+            "max": 16,
+            "value": 9,
+            "min": 6
+        },
+        "vus_max": {
+            "value": 100,
+            "min": 100,
+            "max": 100
+        },
+        "grpc_req_duration": {
+            "avg": 40.51590012016948,
+            "med": 38.83675,
+            "p(90)": 44.026875,
+            "p(95)": 48.166875,
+            "p(99)": 70.223958,
+            "p(99.9)": 221.27268360000542,
+            "max": 707.783375,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "iterations": {
+            "count": 28801,
+            "rate": 39.98906520317953
+        },
+        "checks": {
+            "passes": 86403,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "dropped_iterations{scenario:measure}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<1": false
+            }
+        },
+        "grpc_req_duration{scenario:measure}": {
+            "avg": 40.24307091549999,
+            "med": 38.778082999999995,
+            "p(90)": 43.748603900000006,
+            "p(95)": 47.6394982,
+            "p(99)": 66.1039095,
+            "p(99.9)": 191.55543633305172,
+            "max": 686.982333,
+            "thresholds": {
+                "p(99)<86": false
+            }
+        },
+        "iteration_duration": {
+            "p(95)": 343.662125,
+            "p(99)": 357.022542,
+            "p(99.9)": 517.491433600006,
+            "max": 1381.973958,
+            "avg": 241.93135841776234,
+            "med": 239.750458,
+            "p(90)": 341.512917
+        },
+        "data_sent": {
+            "count": 9403886,
+            "rate": 13056.928940566895
+        }
+    },
+    "setup_data": {
+        "run": "k6-create-jobs-1791412802625"
+    }
+}

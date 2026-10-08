@@ -1,0 +1,110 @@
+{
+    "metrics": {
+        "dropped_iterations": {
+            "count": 0,
+            "rate": 0
+        },
+        "grpc_req_duration": {
+            "med": 40.220708,
+            "p(90)": 45.830959,
+            "p(95)": 50.332416,
+            "p(99)": 68.972666,
+            "p(99.9)": 150.04789140001083,
+            "max": 532.715333,
+            "avg": 41.6420483768966,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "data_received": {
+            "count": 14437948,
+            "rate": 20047.150323141428
+        },
+        "iteration_duration": {
+            "avg": 243.01042857609136,
+            "med": 241.169417,
+            "p(90)": 343.050833,
+            "p(95)": 345.45125,
+            "p(99)": 358.921916,
+            "p(99.9)": 487.98855840001625,
+            "max": 719.286833
+        },
+        "vus": {
+            "value": 10,
+            "min": 6,
+            "max": 17
+        },
+        "data_sent": {
+            "count": 9417813,
+            "rate": 13076.672178500403
+        },
+        "dropped_iterations{scenario:measure}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<1": false
+            }
+        },
+        "vus_max": {
+            "value": 100,
+            "min": 100,
+            "max": 100
+        },
+        "grpc_req_duration{scenario:measure}": {
+            "avg": 41.59989754758351,
+            "med": 40.230374999999995,
+            "p(90)": 45.7946077,
+            "p(95)": 50.28964135,
+            "p(99)": 67.73564799999998,
+            "p(99.9)": 145.12632079200097,
+            "max": 532.715333,
+            "thresholds": {
+                "p(99)<86": false
+            }
+        },
+        "checks": {
+            "passes": 86403,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "iterations": {
+            "rate": 39.99030724149971,
+            "count": 28801
+        }
+    },
+    "setup_data": {
+        "run": "k6-create-jobs-1791411773770"
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "status is OK": {
+                    "name": "status is OK",
+                    "path": "::status is OK",
+                    "id": "d83a99fb6db0de09e9f0d32dd8d2e9d5",
+                    "passes": 28801,
+                    "fails": 0
+                },
+                "response has id": {
+                    "name": "response has id",
+                    "path": "::response has id",
+                    "id": "6649b70c5c96e7e83e46163774f71c12",
+                    "passes": 28801,
+                    "fails": 0
+                },
+                "job is queued": {
+                    "fails": 0,
+                    "name": "job is queued",
+                    "path": "::job is queued",
+                    "id": "91c593911f009d819252a09dee5e8435",
+                    "passes": 28801
+                }
+            }
+    }
+}

@@ -1,0 +1,110 @@
+{
+    "metrics": {
+        "grpc_req_duration{scenario:measure}": {
+            "p(90)": 46.159724700000005,
+            "p(95)": 51.9294934,
+            "p(99)": 82.6759383399999,
+            "p(99.9)": 328.6375437920001,
+            "max": 591.937292,
+            "avg": 42.01774288637518,
+            "med": 39.4904165,
+            "thresholds": {
+                "max>=0": false
+            }
+        },
+        "iteration_duration": {
+            "p(99.9)": 520.4923830000104,
+            "max": 765.599875,
+            "avg": 243.02320292455124,
+            "med": 240.661791,
+            "p(90)": 342.80375,
+            "p(95)": 345.675292,
+            "p(99)": 365.651375
+        },
+        "vus": {
+            "value": 8,
+            "min": 6,
+            "max": 20
+        },
+        "iterations": {
+            "count": 28801,
+            "rate": 39.98482334318124
+        },
+        "vus_max": {
+            "min": 100,
+            "max": 100,
+            "value": 100
+        },
+        "grpc_req_duration": {
+            "p(99)": 79.870458,
+            "p(99.9)": 303.2337580000134,
+            "max": 591.937292,
+            "avg": 42.07657795996684,
+            "med": 39.703958,
+            "p(90)": 46.419708,
+            "p(95)": 52.06175,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "data_sent": {
+            "rate": 13060.668186256553,
+            "count": 9407577
+        },
+        "data_received": {
+            "count": 14443942,
+            "rate": 20052.722796054164
+        },
+        "checks": {
+            "passes": 86403,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "dropped_iterations{scenario:measure}": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<1": false
+            }
+        },
+        "dropped_iterations": {
+            "count": 0,
+            "rate": 0
+        }
+    },
+    "setup_data": {
+        "run": "k6-create-jobs-1791406833721"
+    },
+    "root_group": {
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "status is OK": {
+                    "name": "status is OK",
+                    "path": "::status is OK",
+                    "id": "d83a99fb6db0de09e9f0d32dd8d2e9d5",
+                    "passes": 28801,
+                    "fails": 0
+                },
+                "response has id": {
+                    "name": "response has id",
+                    "path": "::response has id",
+                    "id": "6649b70c5c96e7e83e46163774f71c12",
+                    "passes": 28801,
+                    "fails": 0
+                },
+                "job is queued": {
+                    "name": "job is queued",
+                    "path": "::job is queued",
+                    "id": "91c593911f009d819252a09dee5e8435",
+                    "passes": 28801,
+                    "fails": 0
+                }
+            },
+        "name": ""
+    }
+}
