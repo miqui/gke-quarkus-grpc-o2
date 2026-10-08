@@ -128,7 +128,12 @@ def build(variant, summary, prom_dir, gc_log_text, meta, start, end):
     }
     # A run only counts toward a frontier if the measured window exists, nothing was dropped and
     # the k6 thresholds (including the p99 limit, when one was set) held.
-    result["valid"] = k6["has_measure_window"] and not k6["dropped_iterations"]
+    # A restart during the run (e.g. the JVM exiting on OutOfMemoryError) also voids it.
+    mem = (meta or {}).get("memory_limit") or ""
+    if mem[:-2].isdigit() and mem.endswith(("Mi", "Gi")):
+        result["derived"]["memory_limit_mib"] = int(mem[:-2]) * (1024 if mem.endswith("Gi") else 1)
+    result["valid"] = (k6["has_measure_window"] and not k6["dropped_iterations"]
+                       and not (meta or {}).get("restart_count"))
     result["slo_pass"] = result["valid"] and not k6["failed_thresholds"]
     return result
 

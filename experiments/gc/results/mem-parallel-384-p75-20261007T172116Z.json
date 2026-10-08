@@ -1,0 +1,78 @@
+{
+  "derived": {
+    "achieved_rps": 72.03063063063063,
+    "cpu_seconds_per_1k_requests": 2.6111436318000263,
+    "error_rate": 0.0,
+    "memory_limit_mib": 384,
+    "throttled_fraction": 0.0,
+    "working_set_max_mib": 274.74609375
+  },
+  "gc_log": {
+    "collector": null,
+    "pause_count": 265,
+    "pause_max_ms": 313.79,
+    "pause_p99_ms": 12.863,
+    "pause_total_ms": 1834.075
+  },
+  "k6": {
+    "checks_rate": 1,
+    "dropped_iterations": 0,
+    "failed_thresholds": [
+      "p(99)<75"
+    ],
+    "has_measure_window": true,
+    "max_ms": 3282.01325,
+    "p50_ms": 39.7053745,
+    "p95_ms": 52.30596249999996,
+    "p999_ms": 228.94369350000076,
+    "p99_ms": 80.21572175
+  },
+  "meta": {
+    "branch": "exp/gc-mem-sweep",
+    "git_sha": "7caba7e9d875f9753cf9f09c0ecbb6ef84218770",
+    "hazelcast_node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "hazelcast_pod": "hazelcast-696447844-vmfnh",
+    "image_id": "us-central1-docker.pkg.dev/k8s-dev-412419/springboot-grpc-o2/job-manager-api@sha256:c24f35867b616393e752acc38ede4c3bb51597926424e3c5a546d3dc874ce9f8",
+    "jdk_java_options": "-XX:+UseParallelGC -XX:MaxRAMPercentage=75 -Xlog:gc*:stdout:time,uptime,level,tags",
+    "jvm_gc_flags": "UseParallelGC",
+    "load": {
+      "duration": "10m",
+      "grpc_addr": "grpc.miqui.dev:443",
+      "k6_exit_code": 99,
+      "p99_limit_ms": 75,
+      "rate": 10,
+      "script": "k6-job-lifecycle.js",
+      "source": "operator machine",
+      "warmup": "2m"
+    },
+    "memory_limit": "384Mi",
+    "node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "overlay": "experiments/gc/overlays/mem-parallel-384-p75",
+    "pod": "job-manager-api-bcf4457d-5f5sm",
+    "restart_count": 0,
+    "startup_seconds": 12,
+    "timestamp": "20261007T172116Z"
+  },
+  "prometheus": {
+    "cpu_periods": 5599.949100626243,
+    "cpu_seconds": 105.3261005807982,
+    "cpu_throttled_periods": 0.0,
+    "cpu_throttled_seconds": 0.0,
+    "gc_pause_count": 262.3423423423423,
+    "gc_pause_max_ms": 314.0,
+    "gc_pause_total_ms": 1482.234234234234,
+    "server_errors": 0.0,
+    "server_p999_ms": 24.80278115501527,
+    "server_p99_ms": 19.334802431610957,
+    "server_requests": 40337.15315315315,
+    "working_set_max_bytes": 288092160.0
+  },
+  "slo_pass": false,
+  "valid": true,
+  "variant": "mem-parallel-384-p75",
+  "window": {
+    "end": 1791393629.0,
+    "seconds": 560.0,
+    "start": 1791393069.0
+  }
+}

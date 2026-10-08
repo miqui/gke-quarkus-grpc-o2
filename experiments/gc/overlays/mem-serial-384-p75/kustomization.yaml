@@ -1,0 +1,37 @@
+# Experiment 2 point: serial collector, 384Mi memory limit (request = limit), MaxRAMPercentage=75.
+# Repeat 2 pins the pod to one node (the first repeat ran unpinned and landed on two different nodes).
+# Same as the experiment 1 baseline overlay except for the memory. CPU request/limit stay 250m/1500m. The 768Mi point is
+# the experiment 1 result for this collector (MaxRAMPercentage is 75 there too).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../../k8s
+
+components:
+  - ../_common
+
+patches:
+  - target:
+      kind: Deployment
+      name: job-manager-api
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: job-manager-api
+      spec:
+        template:
+          spec:
+            nodeSelector:
+              kubernetes.io/hostname: gke-dev-cluster-default-pool-dcb7c914-cx1n
+            containers:
+              - name: job-manager-api
+                resources:
+                  requests:
+                    memory: "384Mi"
+                  limits:
+                    memory: "384Mi"
+                env:
+                  - name: JDK_JAVA_OPTIONS
+                    value: "-XX:MaxRAMPercentage=75 -Xlog:gc*:stdout:time,uptime,level,tags"

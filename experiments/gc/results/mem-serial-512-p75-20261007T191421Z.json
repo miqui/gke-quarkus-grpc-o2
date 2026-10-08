@@ -1,0 +1,78 @@
+{
+  "derived": {
+    "achieved_rps": 72.12777777777778,
+    "cpu_seconds_per_1k_requests": 2.70380577355276,
+    "error_rate": 0.0,
+    "memory_limit_mib": 512,
+    "throttled_fraction": 0.0,
+    "working_set_max_mib": 275.26171875
+  },
+  "gc_log": {
+    "collector": null,
+    "pause_count": 180,
+    "pause_max_ms": 19.724,
+    "pause_p99_ms": 17.152,
+    "pause_total_ms": 1583.553
+  },
+  "k6": {
+    "checks_rate": 1,
+    "dropped_iterations": 0,
+    "failed_thresholds": [
+      "p(99)<75"
+    ],
+    "has_measure_window": true,
+    "max_ms": 553.374208,
+    "p50_ms": 40.407875000000004,
+    "p95_ms": 53.1622125,
+    "p999_ms": 180.1829697830011,
+    "p99_ms": 78.63847585999997
+  },
+  "meta": {
+    "branch": "exp/gc-mem-sweep",
+    "git_sha": "17d8d242ebcceffd1ba09247c4d5d6fda4888e0a",
+    "hazelcast_node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "hazelcast_pod": "hazelcast-696447844-vmfnh",
+    "image_id": "us-central1-docker.pkg.dev/k8s-dev-412419/springboot-grpc-o2/job-manager-api@sha256:c24f35867b616393e752acc38ede4c3bb51597926424e3c5a546d3dc874ce9f8",
+    "jdk_java_options": "-XX:MaxRAMPercentage=75 -Xlog:gc*:stdout:time,uptime,level,tags",
+    "jvm_gc_flags": "UseSerialGC",
+    "load": {
+      "duration": "10m",
+      "grpc_addr": "grpc.miqui.dev:443",
+      "k6_exit_code": 99,
+      "p99_limit_ms": 75,
+      "rate": 10,
+      "script": "k6-job-lifecycle.js",
+      "source": "operator machine",
+      "warmup": "2m"
+    },
+    "memory_limit": "512Mi",
+    "node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "overlay": "experiments/gc/overlays/mem-serial-512-p75",
+    "pod": "job-manager-api-5bbdb458f9-vqs2k",
+    "restart_count": 0,
+    "startup_seconds": 14,
+    "timestamp": "20261007T191421Z"
+  },
+  "prometheus": {
+    "cpu_periods": 5598.578885198972,
+    "cpu_seconds": 109.21092111388818,
+    "cpu_throttled_periods": 0.0,
+    "cpu_throttled_seconds": 0.0,
+    "gc_pause_count": 179.4074074074074,
+    "gc_pause_max_ms": 165.0,
+    "gc_pause_total_ms": 1500.5925925925926,
+    "server_errors": 0.0,
+    "server_p999_ms": 25.656874999998855,
+    "server_p99_ms": 20.758616504854384,
+    "server_requests": 40391.555555555555,
+    "working_set_max_bytes": 288632832.0
+  },
+  "slo_pass": false,
+  "valid": true,
+  "variant": "mem-serial-512-p75",
+  "window": {
+    "end": 1791400414.0,
+    "seconds": 560.0,
+    "start": 1791399854.0
+  }
+}
