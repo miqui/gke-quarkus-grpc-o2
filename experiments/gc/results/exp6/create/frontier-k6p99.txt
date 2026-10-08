@@ -1,0 +1,4 @@
+variant      runs  k6.p99_ms               derived.cpu_seconds_per_1k_requests  SLO   frontier
+wl-serial    6     73.179 (67.238-82.676)  2.714 (2.628-2.812)                  pass  yes
+wl-parallel  3     73.432 (66.104-75.150)  2.767 (2.758-2.786)                  pass  -
+wrote experiments/gc/results/exp6/create/frontier-k6p99.svg

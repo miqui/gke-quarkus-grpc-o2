@@ -1,0 +1,76 @@
+{
+  "derived": {
+    "achieved_rps": 40.0,
+    "cpu_seconds_per_1k_requests": 2.692334427858508,
+    "error_rate": 0.0,
+    "memory_limit_mib": 768,
+    "throttled_fraction": 0.0,
+    "working_set_max_mib": 298.60546875
+  },
+  "gc_log": {
+    "collector": null,
+    "pause_count": 79,
+    "pause_max_ms": 21.293,
+    "pause_p99_ms": 21.293,
+    "pause_total_ms": 770.862
+  },
+  "k6": {
+    "checks_rate": 1,
+    "dropped_iterations": 0,
+    "failed_thresholds": [],
+    "has_measure_window": true,
+    "max_ms": 635.55525,
+    "p50_ms": 39.268291,
+    "p95_ms": 48.586125,
+    "p999_ms": 310.5755420000031,
+    "p99_ms": 73.076583
+  },
+  "meta": {
+    "branch": "exp/gc-workloads",
+    "git_sha": "311ae9d881ea4fff2566f3eb09439129129006b3",
+    "hazelcast_node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "hazelcast_pod": "hazelcast-696447844-vmfnh",
+    "image_id": "us-central1-docker.pkg.dev/k8s-dev-412419/springboot-grpc-o2/job-manager-api@sha256:c24f35867b616393e752acc38ede4c3bb51597926424e3c5a546d3dc874ce9f8",
+    "jdk_java_options": "-Xlog:gc*:stdout:time,uptime,level,tags",
+    "jvm_gc_flags": "UseSerialGC",
+    "load": {
+      "duration": "10m",
+      "grpc_addr": "grpc.miqui.dev:443",
+      "k6_exit_code": 0,
+      "p99_limit_ms": null,
+      "rate": 40,
+      "script": "k6-create-jobs.js",
+      "source": "operator machine",
+      "warmup": "2m"
+    },
+    "memory_limit": "768Mi",
+    "node": "gke-dev-cluster-default-pool-dcb7c914-cx1n",
+    "overlay": "experiments/gc/overlays/wl-serial",
+    "pod": "job-manager-api-7fbd47f6f5-t5bpb",
+    "restart_count": 0,
+    "startup_seconds": 14,
+    "timestamp": "20261007T212855Z"
+  },
+  "prometheus": {
+    "cpu_periods": 5599.568790082171,
+    "cpu_seconds": 60.30829118403058,
+    "cpu_throttled_periods": 0.0,
+    "cpu_throttled_seconds": 0.0,
+    "gc_pause_count": 78.81481481481481,
+    "gc_pause_max_ms": 234.0,
+    "gc_pause_total_ms": 734.2222222222222,
+    "server_errors": 0.0,
+    "server_p999_ms": 34.79166666666606,
+    "server_p99_ms": 11.397058823529465,
+    "server_requests": 22400.0,
+    "working_set_max_bytes": 313110528.0
+  },
+  "slo_pass": true,
+  "valid": true,
+  "variant": "wl-serial",
+  "window": {
+    "end": 1791408488.0,
+    "seconds": 560.0,
+    "start": 1791407928.0
+  }
+}

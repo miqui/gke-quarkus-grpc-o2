@@ -1,0 +1,4 @@
+variant      runs  prometheus.server_p99_ms  derived.cpu_seconds_per_1k_requests  SLO   frontier
+wl-serial    5     9.888 (9.784-12.226)      2.113 (2.094-2.348)                  pass  yes
+wl-parallel  3     9.896 (9.844-9.901)       2.179 (2.043-2.288)                  pass  -
+wrote experiments/gc/results/exp6/list/frontier-serverp99.svg
