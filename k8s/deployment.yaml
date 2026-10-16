@@ -177,15 +177,21 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 64Mi
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - job-manager-api
-                topologyKey: "kubernetes.io/hostname"
+      # Spread replicas: hostname spread handles single-node loss; zone spread makes the workload
+      # regional-ready (the cluster is currently zonal, us-central1-a, so zone skew is always 0).
+      # ScheduleAnyway keeps scheduling soft so node autoscaling 3..5 on e2-standard-2 is never
+      # blocked by placement. This replaces the previous preferred podAntiAffinity, which the
+      # spread constraint subsumes with more even bin-packing.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: job-manager-api
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: job-manager-api
