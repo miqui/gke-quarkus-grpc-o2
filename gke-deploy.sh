@@ -4,7 +4,10 @@
 # installed afterwards by gke-bootstrap.sh (Argo CD, then everything else via GitOps).
 #
 # Architecture:
-#   - Zonal cluster (no HA): 1 managed control plane, e2-standard-2 workers, autoscaling 3..5
+#   - Zonal control plane (us-central1-a) with multi-zone workers: the node pool spans
+#     us-central1-a/b/c (--node-locations), e2-standard-2, autoscaling 3..6 nodes in total,
+#     balanced across zones. A zone outage takes nodes down but not the whole data plane;
+#     the control plane itself stays single-zone (a regional one forfeits GKE's free-tier credit)
 #   - Dedicated VPC + subnet with Private Google Access
 #   - Private nodes (no external IPs); control plane locked to operator's IP
 #   - Cloud Router + Cloud NAT for node/pod egress (public images, Hazelcast's JMX agent download)
@@ -23,7 +26,7 @@
 #   PROJECT_ID=k8s-dev-412419 ./gke-deploy.sh
 #   op run --env-file=.env -- env PROJECT_ID=k8s-dev-412419 ./gke-deploy.sh   # with DNS automation
 #
-# Overridable env vars: REGION, ZONE, CLUSTER, VPC, SUBNET, ROUTER, NAT, REPO, MACHINE_TYPE,
+# Overridable env vars: REGION, ZONE, NODE_ZONES, CLUSTER, VPC, SUBNET, ROUTER, NAT, REPO, MACHINE_TYPE,
 #                       MIN_NODES, MAX_NODES, NODE_DISK_SIZE_GB, DOMAIN, API_HOST, GITHUB_REPO,
 #                       CLOUDFLARE_API_TOKEN
 set -euo pipefail
@@ -33,7 +36,10 @@ cd "$(dirname "$0")"
 # ---- Config ---------------------------------------------------------------
 PROJECT_ID="${PROJECT_ID:?PROJECT_ID is required, e.g. PROJECT_ID=k8s-dev-412419 ./gke-deploy.sh}"
 REGION="${REGION:-us-central1}"
-ZONE="${ZONE:-us-central1-a}"
+ZONE="${ZONE:-us-central1-a}"   # control plane location; also the cluster's --zone handle
+# Zones the worker nodes run in (comma-separated, must include $ZONE). Changeable on a live
+# cluster; see "Existing cluster" in section 6.
+NODE_ZONES="${NODE_ZONES:-us-central1-a,us-central1-b,us-central1-c}"
 CLUSTER="${CLUSTER:-dev-cluster}"
 VPC="${VPC:-dev-vpc}"
 SUBNET="${SUBNET:-dev-subnet}"
@@ -41,8 +47,11 @@ ROUTER="${ROUTER:-dev-router}"
 NAT="${NAT:-dev-nat}"
 REPO="${REPO:-springboot-grpc-o2}"   # one Artifact Registry repo per project
 MACHINE_TYPE="${MACHINE_TYPE:-e2-standard-2}"
+# Autoscaling bounds for the whole pool, across all of NODE_ZONES (--total-*-nodes), not per
+# zone. 3 = one node per zone; 6 leaves headroom for the 4th node the platform usually needs
+# (GKE-OPS.md) plus Trivy scan bursts.
 MIN_NODES="${MIN_NODES:-3}"
-MAX_NODES="${MAX_NODES:-5}"
+MAX_NODES="${MAX_NODES:-6}"
 # Node boot disk (GKE default is 100 GB). Holds COS, system pods and all pulled images (no image
 # streaming); 30 GB is ample for this stack. Creation-time only for the default node pool.
 NODE_DISK_SIZE_GB="${NODE_DISK_SIZE_GB:-30}"
@@ -274,9 +283,20 @@ echo "    operator IP: $MY_IP"
 # ---- 6. GKE cluster ---------------------------------------------------------
 # These flags can only be set at creation time (dataplane v2) or are awkward to change later, so
 # an existing cluster created by an older version of this script must be recreated to pick them up.
-log "Creating cluster: $CLUSTER (zonal $ZONE, $MACHINE_TYPE, ${NODE_DISK_SIZE_GB}GB pd-balanced, autoscaling $MIN_NODES..$MAX_NODES, private nodes)"
+[[ ",$NODE_ZONES," == *",$ZONE,"* ]] || { echo "ERROR: NODE_ZONES ($NODE_ZONES) must include ZONE ($ZONE)" >&2; exit 1; }
+NODE_ZONE_COUNT=$(tr ',' '\n' <<<"$NODE_ZONES" | grep -c .)
+log "Creating cluster: $CLUSTER (control plane $ZONE, nodes in $NODE_ZONES, $MACHINE_TYPE, ${NODE_DISK_SIZE_GB}GB pd-balanced, autoscaling $MIN_NODES..$MAX_NODES total, private nodes)"
 if gcloud container clusters describe "$CLUSTER" --zone="$ZONE" &>/dev/null; then
   skip
+  # Existing cluster: node zones and total autoscaling bounds are not reconciled automatically.
+  # Adding zones to a live pool creates as many nodes in each new zone as the pool currently
+  # has per zone (4 today -> 12 nodes, likely over the regional CPU quota), so it's a guided,
+  # ordered change - see GKE-OPS.md "Spreading an existing cluster across zones".
+  CURRENT_ZONES=$(gcloud container clusters describe "$CLUSTER" --zone="$ZONE" \
+    --format='value(locations.list())' | tr ';' ',')
+  if [[ "$(tr ',' '\n' <<<"$CURRENT_ZONES" | sort | paste -sd, -)" != "$(tr ',' '\n' <<<"$NODE_ZONES" | sort | paste -sd, -)" ]]; then
+    echo "    WARNING: nodes run in [$CURRENT_ZONES], wanted [$NODE_ZONES]; not changed here (GKE-OPS.md)" >&2
+  fi
 else
   gcloud container clusters create "$CLUSTER" \
     --zone="$ZONE" \
@@ -299,10 +319,12 @@ else
     --machine-type="$MACHINE_TYPE" \
     --disk-type=pd-balanced \
     --disk-size="$NODE_DISK_SIZE_GB" \
-    --num-nodes="$MIN_NODES" \
+    --node-locations="$NODE_ZONES" \
+    --num-nodes="$(( (MIN_NODES + NODE_ZONE_COUNT - 1) / NODE_ZONE_COUNT ))" \
     --enable-autoscaling \
-    --min-nodes="$MIN_NODES" \
-    --max-nodes="$MAX_NODES" \
+    --location-policy=BALANCED \
+    --total-min-nodes="$MIN_NODES" \
+    --total-max-nodes="$MAX_NODES" \
     --release-channel=stable
 fi
 

@@ -1,0 +1,19 @@
+# Keep at least 2 of the API's replicas serving through voluntary disruptions: node drains for
+# GKE upgrades, cluster-autoscaler scale-downs and zone rebalancing. With the HPA floor of 3
+# (k8s/hpa.yaml) one pod can be evicted at a time, so drains never stall, yet a drain in one
+# zone can't take the API below two zones' worth of capacity. Involuntary loss (a zone outage)
+# isn't governed by a PDB; the zone topology spread in k8s/deployment.yaml covers that.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: job-manager-api
+  labels:
+    app: job-manager-api
+spec:
+  minAvailable: 2
+  # Evict pods that never became Ready (e.g. stuck on a DB wait) even when the budget is
+  # exhausted, so a broken rollout can't wedge a node drain.
+  unhealthyPodEvictionPolicy: AlwaysAllow
+  selector:
+    matchLabels:
+      app: job-manager-api
