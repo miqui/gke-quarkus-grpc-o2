@@ -1,3 +1,5 @@
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/miqui/gke-quarkus-grpc-o2?utm_source=oss&utm_medium=github&utm_campaign=miqui%2Fgke-quarkus-grpc-o2&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 # job-manager-api (Quarkus + gRPC + PostgreSQL on GKE)
 
 A gRPC job manager (Java 21, [Quarkus](https://quarkus.io/) 3.40 LTS,
