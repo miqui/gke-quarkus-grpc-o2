@@ -177,11 +177,13 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 64Mi
-      # Spread replicas: hostname spread handles single-node loss; zone spread makes the workload
-      # regional-ready (the cluster is currently zonal, us-central1-a, so zone skew is always 0).
-      # ScheduleAnyway keeps scheduling soft so node autoscaling 3..5 on e2-standard-2 is never
-      # blocked by placement. This replaces the previous preferred podAntiAffinity, which the
-      # spread constraint subsumes with more even bin-packing.
+      # Spread replicas: hostname spread handles single-node loss; zone spread puts the 3 replicas
+      # in us-central1-a/b/c (the node pool spans all three, gke-deploy.sh NODE_ZONES), so losing
+      # a zone leaves two serving while the third is rescheduled. ScheduleAnyway, not
+      # DoNotSchedule: during a zone outage the dead zone's NotReady nodes still count as a
+      # domain, and a hard constraint would block the replacement pod from the surviving zones.
+      # The PodDisruptionBudget (k8s/pdb.yaml) covers voluntary disruptions. This replaces the
+      # previous preferred podAntiAffinity, which the spread constraint subsumes.
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname

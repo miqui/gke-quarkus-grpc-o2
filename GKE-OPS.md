@@ -1,7 +1,50 @@
 # GKE Operations Notes
 
-Short explanations of cluster events that look alarming but aren't. The cluster is zonal,
-`e2-standard-2` workers, node autoscaling 3..5 (`gke-deploy.sh`).
+Short explanations of cluster events that look alarming but aren't. The cluster has a zonal
+control plane (`us-central1-a`) and multi-zone workers: `e2-standard-2` nodes in
+`us-central1-a/b/c`, autoscaling 3..6 nodes in total, balanced across zones (`gke-deploy.sh`).
+
+## Multi-zone workers: what survives what
+
+| Failure | Effect on the gRPC API |
+|---|---|
+| One node | Its replica is rescheduled; the other two keep serving (hostname spread). |
+| One zone (`b` or `c`) | Two replicas in the other zones keep serving; the Gateway's NEGs drop the dead zone's endpoints; the autoscaler adds a node elsewhere if needed. |
+| Zone `a` | The data plane keeps serving, but the control plane is down: no scheduling, scaling or `kubectl` until it recovers. A regional cluster removes this, at the cost of GKE's free-tier credit. |
+| Node drain / upgrade | `k8s/pdb.yaml` keeps >= 2 replicas available. |
+
+Still single-zone, so a zone outage can still hurt: Hazelcast (`replicas: 1`), Cloud SQL (zonal
+unless `availabilityType: REGIONAL`), and PVC-backed tools (OpenObserve, Trivy - a zonal disk
+pins its pod to one zone).
+
+```bash
+kubectl get nodes -L topology.kubernetes.io/zone
+kubectl get pods -l app=job-manager-api -o wide \
+  | awk 'NR>1{print $7}' | xargs -I{} kubectl get node {} -L topology.kubernetes.io/zone --no-headers
+kubectl get pdb job-manager-api
+```
+
+## Spreading an existing cluster across zones
+
+`gke-deploy.sh` only sets `--node-locations` when it creates the cluster; on an existing one it
+warns and leaves the pool alone. The clean path is a rebuild (`gke-teardown.sh`, then
+`gke-deploy.sh`). In place, order matters:
+
+```bash
+# 1. Switch autoscaling to pool-wide totals first. Per-zone --min-nodes=3 x 3 zones would
+#    otherwise force 9 nodes.
+gcloud container node-pools update default-pool --cluster $CLUSTER --zone $ZONE \
+  --enable-autoscaling --location-policy=BALANCED --total-min-nodes=3 --total-max-nodes=6
+# 2. Check regional CPU quota: each new zone starts with the pool's current per-zone node count
+#    (4 nodes today -> up to 12 x e2-standard-2 = 24 vCPU until the autoscaler scales down).
+gcloud compute regions describe us-central1 --format=json \
+  | jq '.quotas[] | select(.metric=="CPUS")'
+# 3. Add the zones. Nodes in the new zones come up, then the autoscaler trims back to balanced.
+gcloud container clusters update $CLUSTER --zone $ZONE \
+  --node-locations=us-central1-a,us-central1-b,us-central1-c
+# 4. Existing pods don't move on their own; restart the API so the zone spread takes effect.
+kubectl rollout restart deployment/job-manager-api
+```
 
 ## "Cluster Autoscaler skipped scaling up default-pool" for `node-collector-*`
 

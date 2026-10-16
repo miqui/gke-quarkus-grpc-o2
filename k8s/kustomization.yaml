@@ -12,6 +12,7 @@ resources:
   - hazelcast-service.yaml
   - deployment.yaml
   - hpa.yaml
+  - pdb.yaml
   - service.yaml
   - gateway.yaml
 

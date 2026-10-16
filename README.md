@@ -81,8 +81,10 @@ Secrets overwrites them.
   and creates the job schema. `baseline-on-migrate` still adopts a database the Python service's
   Alembic created.
 
-- **Cluster** (`gke-deploy.sh`): zonal GKE Standard cluster `dev-cluster` in `us-central1-a`,
-  `e2-standard-2` nodes autoscaling 3-5, release channel `stable`.
+- **Cluster** (`gke-deploy.sh`): GKE Standard cluster `dev-cluster` with a zonal control plane in
+  `us-central1-a` and **multi-zone workers**: `e2-standard-2` nodes in `us-central1-a/b/c`
+  (`NODE_ZONES`), autoscaling 3-6 nodes in total, balanced across zones; release channel `stable`.
+  See [Zone resilience](#zone-resilience-and-the-database) for what this does and doesn't protect.
   - **Private nodes** (no external IPs), egress through Cloud NAT; the control plane only accepts
     the operator's public IP (master authorized networks).
   - **Dataplane V2**, so NetworkPolicies are enforced; **Workload Identity**, so in-cluster
@@ -91,12 +93,14 @@ Secrets overwrites them.
   - Nodes run as a dedicated `gke-dev-nodes` service account with only
     `roles/container.defaultNodeServiceAccount` plus read access to the one Artifact Registry repo -
     not the default compute account, which has project Editor.
-  - No node pinning: the scheduler places everything. `job-manager-api` keeps a preferred pod
-    anti-affinity so its replicas spread across nodes. A `HorizontalPodAutoscaler`
+  - No node pinning: the scheduler places everything. `job-manager-api` has soft topology spread
+    constraints across nodes and zones (one replica per zone at 3 replicas) and a
+    `PodDisruptionBudget` (`k8s/pdb.yaml`, `minAvailable: 2`) for drains and upgrades. A `HorizontalPodAutoscaler`
     (`k8s/hpa.yaml`) keeps it between 3 and 6 replicas, scaling on CPU only (70% average utilization; a JVM keeps the heap it has grown to, so a memory
     target would pin it at the maximum) against the container's `resources.requests` in `k8s/deployment.yaml`; GKE ships
     metrics-server, so nothing extra is installed for that.
-- **Database**: Cloud SQL for PostgreSQL 16, requested by the app as a `PostgresInstance`
+- **Database**: Cloud SQL for PostgreSQL 16 (`availabilityType: ZONAL`, one zone - see
+  [Zone resilience](#zone-resilience-and-the-database)), requested by the app as a `PostgresInstance`
   (`k8s/postgres.yaml`) - a platform API defined in `k8s/platform/` (a Crossplane
   `CompositeResourceDefinition` + `Composition`) that Crossplane turns into a Cloud SQL instance,
   the `messagedb` database and the `message_app` user.
@@ -222,6 +226,29 @@ Secrets overwrites them.
   `kube-state-metrics`, and `kubernetes-nodes-cadvisor` (the same three jobs behind the "Cluster
   ops" Grafana dashboard) - not every job Prometheus scrapes. See `PROMETHEUS.md` for why (an earlier
   attempt at forwarding everything unfiltered overflowed OpenObserve's single-node in-memory MemTable).
+
+## Zone resilience and the database
+
+The API's replicas run in three zones (`us-central1-a/b/c`), but they all read and write the
+**same Cloud SQL instance**, a single `ZONAL` Postgres VM in one zone of `us-central1` that Google
+picks (`k8s/platform/postgres-composition.yaml`). This is a deliberate dev-cluster trade-off:
+
+- **Concurrency is fine.** Postgres has one writable primary even in `REGIONAL` mode; writes from
+  three zones are no different from three pods in one zone (transactions and row locks; see
+  [Concurrency](#concurrency-claims-and-leases)).
+- **Pods in the other two zones pay a cross-zone hop** on every query: roughly 0.5-1 ms of extra
+  round-trip time, plus inter-zone traffic at about $0.01/GB.
+- **The database is the zone-outage limit.** If the Cloud SQL zone fails, the API can't read or
+  write, however well the pods are spread. Multi-zone nodes protect against node and zone failures
+  that *don't* hit the database's zone, plus node drains and upgrades.
+- **The other single-zone dependencies:** Hazelcast (`replicas: 1`), the zonal control plane in
+  `us-central1-a` (the API keeps serving, but nothing is scheduled or scaled), and PVC-backed tools
+  (OpenObserve, Trivy).
+
+To close the database gap later, set `availabilityType: REGIONAL`. That adds a standby in a second
+zone with automatic failover (about 60 s of write downtime, and the private IP stays the same, so
+the app doesn't change). It roughly doubles the instance cost and requires automated backups, which
+the composition currently turns off. GKE-OPS.md has the per-failure table and verification commands.
 
 ## Continuous Deployment with ArgoCD
 
@@ -805,8 +832,9 @@ only push to `main` once you're ready to deploy.
 A change to a manifest or chart values under `k8s/` doesn't need a CI run at all - Argo CD picks it
 up from git the next time it reconciles (or immediately with a manual "Sync"). Cluster-level
 settings (machine type, node boot disk size, node count range, cluster flags) live in
-`gke-deploy.sh`; changing the node range on a running cluster is `gcloud container clusters update
-dev-cluster --zone=us-central1-a --enable-autoscaling --min-nodes=N --max-nodes=M`, while flags
+`gke-deploy.sh`; changing the node range on a running cluster is `gcloud container node-pools update default-pool
+--cluster=dev-cluster --zone=us-central1-a --enable-autoscaling --total-min-nodes=N
+--total-max-nodes=M` (totals across all zones, not per zone), while flags
 that only apply at creation (Dataplane V2, private nodes, node boot disk size -
 `NODE_DISK_SIZE_GB`, default 30) need a teardown and redeploy.
 

@@ -30,6 +30,7 @@ cd "$(dirname "$0")"
 PROJECT_ID="${PROJECT_ID:?PROJECT_ID is required, e.g. PROJECT_ID=k8s-dev-412419 ./gke-teardown.sh}"
 REGION="${REGION:-us-central1}"
 ZONE="${ZONE:-us-central1-a}"
+NODE_ZONES="${NODE_ZONES:-us-central1-a,us-central1-b,us-central1-c}"
 CLUSTER="${CLUSTER:-dev-cluster}"
 VPC="${VPC:-dev-vpc}"
 SUBNET="${SUBNET:-dev-subnet}"
@@ -197,10 +198,11 @@ fi
 # and the Trivy server's here); they'd keep billing. Some GKE versions label them with the
 # cluster name; others (1.35.6, 2026-09-27) set no labels and only record the PVC in the
 # disk's description (`"storage.gke.io/created-by":"pd.csi.storage.gke.io"`, name `pvc-...`).
-# Match either, in the cluster's zone; only unattached disks are touched.
-log "Checking for leftover PVC disks (unattached pvc-* disks from the PD CSI driver in $ZONE)"
+# Match either, in any zone the nodes ran in (a PVC's disk is created in its first pod's zone);
+# only unattached disks are touched.
+log "Checking for leftover PVC disks (unattached pvc-* disks from the PD CSI driver in $NODE_ZONES)"
 LEFTOVER_DISKS=$(gcloud compute disks list \
-  --filter="-users:* AND zone:($ZONE) AND (labels.goog-k8s-cluster-name=$CLUSTER OR (name~^pvc- AND description:pd.csi.storage.gke.io))" \
+  --filter="-users:* AND zone:(${NODE_ZONES//,/ }) AND (labels.goog-k8s-cluster-name=$CLUSTER OR (name~^pvc- AND description:pd.csi.storage.gke.io))" \
   --format='value(name,zone.basename())' 2>/dev/null || true)
 if [[ -n "$LEFTOVER_DISKS" ]]; then
   while read -r disk zone; do
